@@ -1,6 +1,8 @@
 # misc
 *.pem
 
+.terraform.lock.hcl
+
 # Local .terraform directories
 **/.terraform/*
 
