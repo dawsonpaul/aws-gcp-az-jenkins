@@ -52,7 +52,7 @@ resource "azurerm_linux_virtual_machine" "waflab" {
 
   admin_ssh_key {
     username   = "adminuser"
-    public_key = file("/var/lib/jenkins/workspace/waf-lab-pipeline_main/ id_rsa.pub")
+    public_key = file("/var/lib/jenkins/workspace/waf-lab-pipeline_main/id_rsa.pub")
   }
 
   os_disk {
