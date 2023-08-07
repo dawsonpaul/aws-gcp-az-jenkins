@@ -52,7 +52,7 @@ resource "azurerm_linux_virtual_machine" "waflab" {
 
   admin_ssh_key {
     username   = "adminuser"
-    public_key = file("/var/lib/jenkins/workspace/waf-lab-pipeline_main/id_rsa.pub")
+    public_key = file("/var/lib/jenkins/workspace/waf-lab-pipeline_main/ id_rsa.pub")
   }
 
   os_disk {
@@ -69,8 +69,8 @@ resource "azurerm_linux_virtual_machine" "waflab" {
   }
   
 # provisioner "local-exec" {
-#   command = "ansible-playbook -i '${azurerm_public_ip.waflab_nic.ip_address},' -u adminuser --private-key ~/.ssh/id_rsa ansible_react_playbook.yml"123
-# }//-------
+#   command = "ansible-playbook -i '${azurerm_public_ip.waflab_nic.ip_address},' -u adminuser --private-key ~/.ssh/id_rsa ansible_react_playbook.yml"
+# }
 
 }
 
