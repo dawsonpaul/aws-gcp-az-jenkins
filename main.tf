@@ -70,7 +70,7 @@ resource "azurerm_linux_virtual_machine" "waflab" {
   
 # provisioner "local-exec" {
 #   command = "ansible-playbook -i '${azurerm_public_ip.waflab_nic.ip_address},' -u adminuser --private-key ~/.ssh/id_rsa ansible_react_playbook.yml"123
-# }//
+# }//----
 
 }
 
