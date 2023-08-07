@@ -5,16 +5,20 @@ pipeline {
         TF_CLI_CONFIG_FILE = credentials('terraform_creds')
     }
     stages {
-        stage('Init1') {
-            steps {
-                sh 'ls'
-                sh 'terraform init'
+        withCredentials([sshUserPrivateKey(credentialsId: 'ec2_ssh', keyFileVariable: 'SSH_KEY')]) {
+            stage('Terraform_Init') {
+                steps {
+                    sh 'ls'
+                    sh 'terraform init'
+                    // SSH_KEY is available here
+                }
+            }
+            stage('Terraform_Plan') {
+                steps {
+                    sh 'terraform plan'
+                    // SSH_KEY is available here too
+                }
             }
         }
-        stage('Plan') {
-            steps {
-                sh 'terraform plan'
-            }
-        }
-     }
+    }
 }
