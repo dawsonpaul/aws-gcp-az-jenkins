@@ -3,7 +3,7 @@ pipeline {
     environment {
         TF_IN_AUTOMATION = 'true'
         TF_CLI_CONFIG_FILE = credentials('terraform_creds')
-        AZ_CRED = credentials('Azure_Service_Principal')
+        AZURE= credentials('Azure_Service_Principal')
         echo "My client id is $AZURE_CLIENT_ID"
         echo "My client secret is $AZURE_CLIENT_SECRET"
         echo "My tenant id is $AZURE_TENANT_ID"
@@ -27,7 +27,7 @@ pipeline {
         }
         stage('Terraform_Plan') {
             steps {
-                sh 'az login --service-principal -u $AZ_CRED_CLIENT_ID -p $AZ_CRED_CLIENT_SECRET -t $AZ_CRED_TENANT_ID'
+                sh 'AZURE login --service-principal -u $AZURE_CRED_CLIENT_ID -p $AZURE_CRED_CLIENT_SECRET -t $AZURE_CRED_TENANT_ID'
                 sh 'terraform plan'
                 // SSH_KEY is available here too
             }
