@@ -4,7 +4,7 @@ pipeline {
         TF_IN_AUTOMATION = 'true'
     }
     stages {
-        stage('Init') {
+        stage('Init1') {
             steps {
                 sh 'ls'
                 sh 'terraform init'
