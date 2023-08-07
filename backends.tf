@@ -3,7 +3,7 @@ terraform {
     organization = "dawsi"
 
     workspaces {
-      name = "azure-waf-demo"
+      name = "azure-waf-demo-jenkins"
     }
   }
 }
