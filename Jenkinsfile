@@ -38,7 +38,7 @@ pipeline {
                 sh 'terraform apply -auto-approve -no-color -var "AZURE_CLIENT_ID=${AZURE_CLIENT_ID}" -var "AZURE_CLIENT_SECRET=${AZURE_CLIENT_SECRET}" -var "AZURE_TENANT_ID=${AZURE_TENANT_ID}" -var "AZURE_SUBSCRIPTION_ID=${AZURE_SUBSCRIPTION_ID}"'
                 script {
                     // Capture the IP address of the VM
-                    vm_ip = sh(script: "terraform output vm_ip", returnStdout: true).trim()
+                    waflab_vm_ip_address = sh(script: "terraform output waflab_vm_ip_address", returnStdout: true).trim()
                 }
             }
         }
@@ -46,7 +46,7 @@ pipeline {
         stage('Ansible: Deploy DVWA') {
             steps {
                 // Run Ansible playbook, passing the VM IP as an extra variable
-                sh "ansible-playbook deploy-dvwa.yml --extra-vars 'target_host=${vm_ip}'"
+                sh "ansible-playbook deploy-dvwa.yml --extra-vars 'target_host=${waflab_vm_ip_address}'"
             }
         }
     }
