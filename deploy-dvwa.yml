@@ -1,5 +1,14 @@
 ---
-- hosts: "{{ waflab_vm_ip_address }}"
+- name: Add VM IP to inventory
+  hosts: localhost
+  gather_facts: False
+  tasks:
+    - name: Add host
+      add_host:
+        hostname: "{{ waflab_vm_ip_address }}"
+        groupname: myhost
+
+- hosts: myhost
   become: yes
   tasks:
     - name: Install Docker
@@ -25,3 +34,8 @@
         ports:
           - "3000:80"
         state: started
+        restart_policy: always
+
+    
+
+  
