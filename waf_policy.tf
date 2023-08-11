@@ -1,9 +1,4 @@
-resource "azurerm_resource_group" "waflab" {
-  name     = "azure-waf-demo"
-  location = "West Europe"
-}
-
-resource "azurerm_web_application_firewall_policy" "waflab" {
+resource "azurerm_web_application_firewall_policy" "waflab_policy" {
   #count = 3
   name                = "azure-waf-demo" #-${count.index + 1}
   resource_group_name = azurerm_resource_group.waflab.name
