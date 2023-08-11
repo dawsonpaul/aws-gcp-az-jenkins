@@ -74,73 +74,100 @@ resource "azurerm_linux_virtual_machine" "waflab" {
 
 }
 
-# Create a public IP for the load balancer -
-resource "azurerm_public_ip" "waflab_lb" {
-  name                = "waflab-lb-pip"
+# Application Gateway Subnet
+resource "azurerm_subnet" "waflab_appgw" {
+  name                 = "appgw"
+  resource_group_name  = azurerm_resource_group.waflab.name
+  virtual_network_name = azurerm_virtual_network.waflab.name
+  address_prefixes     = ["10.0.3.0/24"]
+}
+
+# Application Gateway Public IP
+resource "azurerm_public_ip" "waflab_appgw" {
+  name                = "waflab-appgw-pip"
   location            = azurerm_resource_group.waflab.location
   resource_group_name = azurerm_resource_group.waflab.name
   allocation_method   = "Static"
+  sku                 = "Standard"
 }
 
-# Create a load balancer
-resource "azurerm_lb" "waflab" {
-  name                = "waflab-lb"
+# Application Gateway with WAF policy
+resource "azurerm_application_gateway" "waflab" {
+  name                = "waflab-appgw"
   location            = azurerm_resource_group.waflab.location
   resource_group_name = azurerm_resource_group.waflab.name
 
+  sku {
+    name     = "WAF_v2"
+    tier     = "WAF_v2"
+    capacity = 2
+  }
+
+  gateway_ip_configuration {
+    name      = "gateway-ip-configuration"
+    subnet_id = azurerm_subnet.waflab_appgw.id
+  }
+
+  frontend_port {
+    name = "frontend-port"
+    port = 80
+  }
+
   frontend_ip_configuration {
-    name                 = "PublicIPAddress"
-    public_ip_address_id = azurerm_public_ip.waflab_lb.id
+    name                 = "frontend-ip-configuration"
+    public_ip_address_id = azurerm_public_ip.waflab_appgw.id
+  }
+
+  backend_address_pool {
+    name = "backend-address-pool"
+    fqdns = [
+      azurerm_public_ip.waflab_nic.ip_address
+    ]
+  }
+
+  backend_http_settings {
+    name                  = "backend-http-settings"
+    cookie_based_affinity = "Disabled"
+    path                  = "/"
+    port                  = 3000
+    protocol              = "Http"
+    request_timeout       = 60
+  }
+
+  http_listener {
+    name                           = "http-listener"
+    frontend_ip_configuration_name = "frontend-ip-configuration"
+    frontend_port_name             = "frontend-port"
+    protocol                       = "Http"
+  }
+
+  request_routing_rule {
+    name                       = "request-routing-rule"
+    rule_type                  = "Basic"
+    http_listener_name         = "http-listener"
+    backend_address_pool_name  = "backend-address-pool"
+    backend_http_settings_name = "backend-http-settings"
+  }
+
+  waf_configuration {
+    enabled                  = true
+    firewall_mode            = "Detection"
+    rule_set_type            = "OWASP"
+    rule_set_version         = "3.1"
+    request_body_check       = true
+    max_request_body_size_kb = 128
   }
 }
 
-# Create a load balancer backend address pool
-resource "azurerm_lb_backend_address_pool" "waflab" {
-  loadbalancer_id = azurerm_lb.waflab.id
-  name            = "BackEndAddressPool"
-}
-
-resource "azurerm_network_interface_backend_address_pool_association" "waflab" {
-  network_interface_id    = azurerm_network_interface.waflab.id
-  ip_configuration_name   = "internal"
-  backend_address_pool_id = azurerm_lb_backend_address_pool.waflab.id
-}
-
-# Create a load balancer rule
-resource "azurerm_lb_rule" "waflab" {
-  loadbalancer_id       = azurerm_lb.waflab.id
-  name                  = "LBRule"
-  protocol              = "Tcp"
-  frontend_port         = 80
-  backend_port          = 3000
-  frontend_ip_configuration_name = azurerm_lb.waflab.frontend_ip_configuration[0].name
-  backend_address_pool_ids       = [azurerm_lb_backend_address_pool.waflab.id]
-  probe_id                       = azurerm_lb_probe.waflab.id
-}
-
-# Create a load balancer health probe
-resource "azurerm_lb_probe" "waflab" {
-  loadbalancer_id           = azurerm_lb.waflab.id
-  name                      = "HealthProbe"
-  port                      = 3000
-  protocol                  = "Tcp"
-  interval_in_seconds       = 15
-  number_of_probes          = 2
-}
 
 output "vm_ssh_command" {
   value = "ssh -i ~/.ssh/id_rsa adminuser@${azurerm_public_ip.waflab_nic.ip_address}"
   description = "SSH command to connect to the VM"
 }
 
-output "lb_http_url" {
-  value = "http://${azurerm_public_ip.waflab_lb.ip_address}"
-  description = "HTTP URL to connect to the load balancer"
-}
-
-output "waflab_lb_ip_address" {
-  value = azurerm_public_ip.waflab_lb.ip_address
-  description = "Public IP address of the load balancer"
+output "waflab_appgw_url" {
+  value       = "http://${azurerm_public_ip.waflab_appgw.ip_address}"
+  description = "URL to connect to the Application Gateway"
 }
 
 

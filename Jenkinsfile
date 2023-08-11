@@ -40,7 +40,7 @@ pipeline {
                 script {
                     // Capture the IP address of the VM
                     waflab_vm_ip_address = sh(script: "terraform output waflab_vm_ip_address", returnStdout: true).trim()
-                    waflab_lb_ip_address = sh(script: "terraform output waflab_lb_ip_address", returnStdout: true).trim()
+                    waflab_appgw_url = sh(script: "terraform output waflab_appgw_url", returnStdout: true).trim()
                 }
             }
         }
@@ -56,7 +56,7 @@ pipeline {
             steps {
                 sh "docker pull wallarm/gotestwaf:latest"
                 // Run gotestwaf against the Load Balancer IP-
-                sh "docker run --rm --network='host' -v $PWD/reports:/app/reports wallarm/gotestwaf --url http://${waflab_lb_ip_address}"
+                sh "docker run --rm --network='host' -v $PWD/reports:/app/reports wallarm/gotestwaf --url http://${waflab_appgw_url}"
                 // Change the path to the actual report file location
                 script {
                     sh "mv -f $PWD/reports $WORKSPACE"
