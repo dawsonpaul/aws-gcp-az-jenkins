@@ -9,14 +9,18 @@
         groupname: myhost
 
 - hosts: myhost
-  collections:
-    - community.docker
   become: yes
   tasks:
-    - name: Ensure Docker is installed
-      ansible.builtin.package:
-        name: docker
+    - name: Install Docker
+      apt:
+        name: docker.io
         state: present
+        update_cache: yes
+
+    - name: Ensure Docker is running
+      systemd:
+        name: docker
+        state: started
 
     - name: Start OWASP Juice Shop container
       docker_container:
@@ -26,7 +30,7 @@
           - "3000:3000"
         state: started
         restart_policy: always
-
+'
 
 
 
