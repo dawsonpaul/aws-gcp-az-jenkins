@@ -1,0 +1,45 @@
+---
+- name: Add VM IP to inventory
+  hosts: localhost
+  gather_facts: False
+  tasks:
+    - name: Add host
+      add_host:
+        hostname: "{{ waflab_vm_ip_address }}"
+        groupname: myhost
+
+- hosts: myhost
+  become: yes
+  tasks:
+    - name: Install Docker
+      apt:
+        name: docker.io
+        state: present
+        update_cache: yes
+
+    - name: Ensure Docker is running
+      systemd:
+        name: docker
+        state: started
+
+    - name: Start OWASP Juice Shop container
+      docker_container:
+        name: juiceshop
+        image: bkimminich/juice-shop
+        ports:
+          - "3000:3000"
+        state: started
+        restart_policy: always
+
+
+
+
+
+
+
+
+
+
+    
+
+  
