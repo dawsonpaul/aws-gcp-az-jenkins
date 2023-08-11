@@ -74,7 +74,7 @@ resource "azurerm_linux_virtual_machine" "waflab" {
 
 }
 
-# Create a public IP for the load balancer
+# Create a public IP for the load balancer -
 resource "azurerm_public_ip" "waflab_lb" {
   name                = "waflab-lb-pip"
   location            = azurerm_resource_group.waflab.location
