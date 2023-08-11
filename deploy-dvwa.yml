@@ -1,6 +1,6 @@
 ---
 - name: Deploy DVWA
-  hosts: '{{ waflab_vm_ip_address }}'
+  hosts: "{{ waflab_vm_ip_address }}"
   become: yes
   vars:
     dvwa_git_repo: https://github.com/digininja/DVWA.git
