@@ -66,7 +66,7 @@ pipeline {
     }
     post {
         always {
-            // Archive the report as an artifact-
+            // Archive the report as an artifact
             archiveArtifacts artifacts: 'report.txt', fingerprint: true
         }
     }
