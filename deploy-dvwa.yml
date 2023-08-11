@@ -1,0 +1,56 @@
+---
+- name: Deploy DVWA
+  hosts: '{{ waflab_vm_ip_address }}'
+  become: yes
+  vars:
+    dvwa_git_repo: https://github.com/digininja/DVWA.git
+    dvwa_path: /var/www/html/DVWA
+
+  tasks:
+    - name: Update the package cache
+      apt:
+        update_cache: yes
+
+    - name: Install necessary packages
+      apt:
+        name:
+          - apache2
+          - php
+          - php-mysql
+          - libapache2-mod-php
+          - git
+          - mysql-server
+        state: present
+
+    - name: Clone DVWA repository
+      git:
+        repo: '{{ dvwa_git_repo }}'
+        dest: '{{ dvwa_path }}'
+
+    - name: Copy DVWA configuration file
+      copy:
+        src: '{{ dvwa_path }}/config/config.inc.php.dist'
+        dest: '{{ dvwa_path }}/config/config.inc.php'
+
+    - name: Configure MySQL for DVWA
+      block:
+        - name: Start MySQL service
+          service:
+            name: mysql
+            state: started
+
+        - name: Create DVWA database
+          mysql_db:
+            name: dvwa
+            state: present
+
+        - name: Create DVWA user
+          mysql_user:
+            name: dvwa
+            password: 'dvwa'
+            priv: 'dvwa.*:ALL'
+
+    - name: Restart Apache to apply changes
+      service:
+        name: apache2
+        state: restarted
