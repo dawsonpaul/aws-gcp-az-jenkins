@@ -21,7 +21,7 @@ pipeline {
         }
         stage('Terraform: Init') {
             steps {
-                
+
                 sh 'terraform init -no-color'
             }
         }
@@ -47,7 +47,7 @@ pipeline {
         stage('Ansible: Deploy DVWA') {
             steps {
                 // Run Ansible playbook, passing the VM IP as an extra variable
-                sh "ansible-playbook ./deploy-dvwa.yml  -u adminuser --private-key ${EC2_SSH_KEY} --extra-vars 'waflab_vm_ip_address=${waflab_vm_ip_address}' -vvvv"
+                sh "ansible-playbook ./deploy-dvwa.yml  -u adminuser --private-key ${EC2_SSH_KEY} --extra-vars 'waflab_vm_ip_address=${waflab_vm_ip_address}'"
             }
         }
     }

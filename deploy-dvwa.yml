@@ -36,6 +36,15 @@
         state: started
         restart_policy: always
 
+    - name: Change DVWA password
+      shell: |
+        docker exec dvwa bash -c "sed -i 's/\(\$dvwa_password\s*=\s*\"\)[^\"]*\";/\1QWERTY123456!!09876";/' /var/www/dvwa/dvwa-master/config/config.inc.php"
+
+
+
+
+
+
     
 
   
