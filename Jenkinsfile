@@ -4,6 +4,7 @@ pipeline {
         TF_IN_AUTOMATION = 'true'
         TF_CLI_CONFIG_FILE = credentials('terraform_creds')
         AZURE= credentials('Azure_Service_Principal')
+        EC2_SSH_KEY = credentials('ec2_ssh')
     }
 
     stages {
@@ -46,7 +47,7 @@ pipeline {
         stage('Ansible: Deploy DVWA') {
             steps {
                 // Run Ansible playbook, passing the VM IP as an extra variable
-                sh "ansible-playbook ./deploy-dvwa.yml --extra-vars 'waflab_vm_ip_address=${waflab_vm_ip_address}'"
+                sh "ansible-playbook ./deploy-dvwa.yml  -u ubuntu --private-key ${EC2_SSH_KEY} --extra-vars 'waflab_vm_ip_address=${waflab_vm_ip_address}' -vvvv"
             }
         }
     }
