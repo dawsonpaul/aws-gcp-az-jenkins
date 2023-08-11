@@ -45,7 +45,7 @@ pipeline {
             }
         }
 
-        stage('Ansible: Deploy OWASP Juiceshop') {
+        stage('Ansible: Deploy OWASP JuiceShop') {
             steps {
                 // Run Ansible playbook, passing the VM IP as an extra variable
                 sh "ansible-playbook ./deploy-owasp-juiceshop.yml  -u adminuser --private-key ${EC2_SSH_KEY} --extra-vars 'waflab_vm_ip_address=${waflab_vm_ip_address}'"
