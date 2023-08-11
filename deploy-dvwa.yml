@@ -1,55 +1,18 @@
----
-- name: Add VM IP to inventory
-  hosts: localhost
-  gather_facts: False
-  tasks:
-    - name: Add host
-      add_host:
-        hostname: "{{ waflab_vm_ip_address }}"
-        groupname: myhost
-
 - hosts: myhost
+  collections:
+    - community.docker
   become: yes
   tasks:
-    - name: Install Docker
-      apt:
-        name: docker.io
-        state: present
-        update_cache: yes
-
-    - name: Ensure Docker is running
-      systemd:
+    - name: Ensure Docker is installed
+      ansible.builtin.package:
         name: docker
-        state: started
+        state: present
 
-    - name: Pull DVWA Docker image
-      docker_image:
-        name: vulnerables/web-dvwa
-        source: pull
-
-    - name: Run DVWA Docker container
+    - name: Start OWASP Juice Shop container
       docker_container:
-        name: dvwa
-        image: vulnerables/web-dvwa
+        name: juiceshop
+        image: bkimminich/juice-shop
         ports:
-          - "3000:80"
+          - "3000:3000"
         state: started
         restart_policy: always
-        env:
-          DVWA_PASSWORD: J7r@Q!2zS1pT$8nE
-          DB_PASSWORD: 'J7r@Q!2zS1pT$8nE'
-          MYSQL_PASS: 'J7r@Q!2zS1pT$8nE'
-          DVWA_USER: 'dawsonpaul'
-
-
-
-
-
-
-
-
-
-
-    
-
-  

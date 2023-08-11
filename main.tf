@@ -43,7 +43,7 @@ resource "azurerm_network_interface" "waflab" {
 
 # Create a virtual machine
 resource "azurerm_linux_virtual_machine" "waflab" {
-  name                = "waflab-machine"
+  name                = "waflab-juiceshop"
   resource_group_name = azurerm_resource_group.waflab.name
   location            = azurerm_resource_group.waflab.location
    size = "Standard_D2s_v3"

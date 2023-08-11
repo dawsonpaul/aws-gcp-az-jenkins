@@ -1,5 +1,0 @@
-$_DVWA[ 'db_server'] = '127.0.0.1';
-$_DVWA[ 'db_port'] = '3000';
-$_DVWA[ 'db_user' ] = 'dawsonpaul';
-$_DVWA[ 'db_password' ] = 'Y@B@D@B@D00';
-$_DVWA[ 'db_database' ] = 'dvwa';
