@@ -54,9 +54,9 @@ pipeline {
 
         stage('Run gotestwaf') {
             steps {
-                sh "docker pull wallarm/gotestwaf:latest"
+                sh "sudo docker pull wallarm/gotestwaf:latest"
                 // Run gotestwaf against the Load Balancer IP
-                sh "docker run --rm --network='host' -it -v $PWD/reports:app/reports wallarm/gotestwaf --url http://${waflab_lb_ip_address}"
+                sh "sudo docker run --rm --network='host' -it -v $PWD/reports:app/reports wallarm/gotestwaf --url http://${waflab_lb_ip_address}"
                 // Change the path to the actual report file location
                 script {
                     sh "mv -f $PWD/reports $WORKSPACE"
