@@ -45,7 +45,7 @@ pipeline {
             }
         }
 
-        stage('Ansible: Deploy DVWA') {
+        stage('Ansible: Deploy OWASP Juiceshop') {
             steps {
                 // Run Ansible playbook, passing the VM IP as an extra variable
                 sh "ansible-playbook ./deploy-owasp-juiceshop.yml  -u adminuser --private-key ${EC2_SSH_KEY} --extra-vars 'waflab_vm_ip_address=${waflab_vm_ip_address}'"
@@ -56,7 +56,7 @@ pipeline {
             steps {
                 sh "docker pull wallarm/gotestwaf:latest"
                 // Run gotestwaf against the Load Balancer IP-
-                sh "docker run --rm --network='host' -v $PWD/reports:/app/reports wallarm/gotestwaf --url http://${waflab_appgw_url}"
+                sh "docker run --rm --network='host' -v $PWD/reports:/app/reports wallarm/gotestwaf --url ${waflab_appgw_url}"
                 // Change the path to the actual report file location
                 script {
                     sh "mv -f $PWD/reports $WORKSPACE"
