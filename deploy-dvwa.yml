@@ -38,7 +38,7 @@
 
     - name: Copy DVWA configuration file
       copy:
-        src: '{{ dvwa_path }}/config/config.inc.php.dist'
+        src: 'config.inc.php.dist'
         dest: '{{ dvwa_path }}/config/config.inc.php'
 
     - name: Configure MySQL for DVWA
