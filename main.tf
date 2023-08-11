@@ -138,3 +138,8 @@ output "lb_http_url" {
   description = "HTTP URL to connect to the load balancer"
 }
 
+output "waflab_vm_ip_address" {
+  value = azurerm_public_ip.waflab_nic.ip_address
+  description = "Public IP address of the VM"
+}
+
