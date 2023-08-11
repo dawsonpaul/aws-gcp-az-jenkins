@@ -1,3 +1,13 @@
+---
+- name: Add VM IP to inventory
+  hosts: localhost
+  gather_facts: False
+  tasks:
+    - name: Add host
+      add_host:
+        hostname: "{{ waflab_vm_ip_address }}"
+        groupname: myhost
+
 - hosts: myhost
   collections:
     - community.docker
@@ -16,3 +26,17 @@
           - "3000:3000"
         state: started
         restart_policy: always
+
+
+
+
+
+
+
+
+
+
+
+    
+
+  
