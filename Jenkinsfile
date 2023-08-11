@@ -46,7 +46,7 @@ pipeline {
         stage('Ansible: Deploy DVWA') {
             steps {
                 // Run Ansible playbook, passing the VM IP as an extra variable
-                sh "ansible-playbook ./deploy-dvwa.yml --extra-vars 'target_host=${waflab_vm_ip_address}'"
+                sh "ansible-playbook ./deploy-dvwa.yml --extra-vars 'waflab_vm_ip_address ${waflab_vm_ip_address}'"
             }
         }
     }
