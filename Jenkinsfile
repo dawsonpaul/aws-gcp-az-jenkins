@@ -40,6 +40,7 @@ pipeline {
                 script {
                     // Capture the IP address of the VM
                     waflab_vm_ip_address = sh(script: "terraform output waflab_vm_ip_address", returnStdout: true).trim()
+                    waflab_lb_ip_address = sh(script: "terraform output waflab_lb_ip_address", returnStdout: true).trim()
                 }
             }
         }
@@ -47,35 +48,27 @@ pipeline {
         stage('Ansible: Deploy DVWA') {
             steps {
                 // Run Ansible playbook, passing the VM IP as an extra variable
-                sh "ansible-playbook ./deploy-dvwa.yml  -u adminuser --private-key ${EC2_SSH_KEY} --extra-vars 'waflab_vm_ip_address=${waflab_vm_ip_address}'"
+                sh "ansible-playbook ./deploy-owasp-juiceshop.yml  -u adminuser --private-key ${EC2_SSH_KEY} --extra-vars 'waflab_vm_ip_address=${waflab_vm_ip_address}'"
+            }
+        }
+
+        stage('Run gotestwaf') {
+            steps {
+                sh "docker pull wallarm/gotestwaf:latest"
+                // Run gotestwaf against the Load Balancer IP
+                sh "docker run --rm --network="host" -it -v $PWD/reports:app/reports wallarm/gotestwaf --url http://${waflab_lb_ip_address}"
+                // Change the path to the actual report file location
+                script {
+                    sh "mv -f $PWD/reports $WORKSPACE"
+                }
             }
         }
     }
+
+    post {
+        always {
+            // Archive the report as an artifact
+            archiveArtifacts artifacts: 'report.txt', fingerprint: true
+        }
+    }
 }
-
-// pipeline {
-//     agent any
-
-//     stages {
-//         stage('Terraform: Provision VM') {
-//             steps {
-//                 // Run Terraform scripts
-//                 sh 'terraform init'
-//                 sh 'terraform apply -auto-approve'
-//                 script {
-//                     // Capture the IP address of the VM
-//                     vm_ip = sh(script: "terraform output vm_ip", returnStdout: true).trim()
-//                 }
-//             }
-//         }
-
-//         stage('Ansible: Deploy DVWA') {
-//             steps {
-//                 // Run Ansible playbook, passing the VM IP as an extra variable
-//                 sh "ansible-playbook deploy-dvwa.yml --extra-vars 'target_host=${vm_ip}'"
-//             }
-//         }
-//     }
-// }
-
-
