@@ -18,13 +18,13 @@ pipeline {
                 echo "My subscription id is $AZURE_SUBSCRIPTION_ID"
             }
         }
-        stage('Terraform_Init') {
+        stage('Terraform: Init') {
             steps {
                 sh 'ls'
                 sh 'terraform init -no-color'
             }
         }
-        stage('Terraform_Plan') {
+        stage('Terraform: Plan') {
             steps {
                 
                 sh 'az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET -t $AZURE_TENANT_ID'
@@ -32,15 +32,49 @@ pipeline {
 
             }
         }
-        
-        stage('Terraform_Apply') {
+
+        stage('Terraform: Apply') {
             steps {
                 sh 'terraform apply -auto-approve -no-color -var "AZURE_CLIENT_ID=${AZURE_CLIENT_ID}" -var "AZURE_CLIENT_SECRET=${AZURE_CLIENT_SECRET}" -var "AZURE_TENANT_ID=${AZURE_TENANT_ID}" -var "AZURE_SUBSCRIPTION_ID=${AZURE_SUBSCRIPTION_ID}"'
+                script {
+                    // Capture the IP address of the VM
+                    vm_ip = sh(script: "terraform output vm_ip", returnStdout: true).trim()
+                }
             }
         }
 
-        
-
-
+        stage('Ansible: Deploy DVWA') {
+            steps {
+                // Run Ansible playbook, passing the VM IP as an extra variable
+                sh "ansible-playbook deploy-dvwa.yml --extra-vars 'target_host=${vm_ip}'"
+            }
+        }
     }
 }
+
+// pipeline {
+//     agent any
+
+//     stages {
+//         stage('Terraform: Provision VM') {
+//             steps {
+//                 // Run Terraform scripts
+//                 sh 'terraform init'
+//                 sh 'terraform apply -auto-approve'
+//                 script {
+//                     // Capture the IP address of the VM
+//                     vm_ip = sh(script: "terraform output vm_ip", returnStdout: true).trim()
+//                 }
+//             }
+//         }
+
+//         stage('Ansible: Deploy DVWA') {
+//             steps {
+//                 // Run Ansible playbook, passing the VM IP as an extra variable
+//                 sh "ansible-playbook deploy-dvwa.yml --extra-vars 'target_host=${vm_ip}'"
+//             }
+//         }
+//     }
+// }
+
+
