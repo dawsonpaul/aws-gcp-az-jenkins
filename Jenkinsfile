@@ -52,7 +52,7 @@ pipeline {
             }
         }
 
-        stage("Run GoTestWAF against http://${waflab_lb_ip_address}") {
+        stage('Run GoTestWAF Report') {
             steps {
                 sh "docker pull wallarm/gotestwaf:latest"
                 // Run gotestwaf against the Load Balancer IP-
