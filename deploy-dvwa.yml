@@ -30,7 +30,6 @@
           - "3000:3000"
         state: started
         restart_policy: always
-'
 
 
 
