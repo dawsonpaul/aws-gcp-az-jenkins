@@ -35,10 +35,16 @@
           - "3000:80"
         state: started
         restart_policy: always
+        env:
+          DVWA_PASSWORD: J7r@Q!2zS1pT$8nE
+          DB_PASSWORD: 'J7r@Q!2zS1pT$8nE'
+          MYSQL_PASS: 'J7r@Q!2zS1pT$8nE'
+          DWWA_USER: 'dawsonpaul'
+'
 
-    - name: Change DVWA password
-      shell: |
-        docker exec dvwa bash -c "sed -i 's/\(\$dvwa_password\s*=\s*\"\)[^\"]*\";/\1QWERTY123456!!09876";/' /var/www/dvwa/dvwa-master/config/config.inc.php"
+
+
+
 
 
 
