@@ -8,7 +8,7 @@ pipeline {
         NGROK_TOKEN = credentials('ngrok_token')
     }
 
-    // stages {
+ stages {
 
     //     stage('Terraform: Init') {
     //         steps {
@@ -77,4 +77,4 @@ pipeline {
 //             archiveArtifacts artifacts: '*.html', fingerprint: true
 //         }
 //     }
-// }
+}
