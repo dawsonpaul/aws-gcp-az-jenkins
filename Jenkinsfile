@@ -72,9 +72,9 @@ pipeline {
     
     }
 
-    post {
-        always {
-            archiveArtifacts artifacts: '*.html', fingerprint: true
-        }
-    }
-}
+//     post {
+//         always {
+//             archiveArtifacts artifacts: '*.html', fingerprint: true
+//         }
+//     }
+// }
