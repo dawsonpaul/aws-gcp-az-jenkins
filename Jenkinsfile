@@ -51,7 +51,7 @@ pipeline {
 
         stage('Start HTTP Server') {
             steps {
-                sh 'nohup python3 -m http.server 8000 --directory /var/lib/jenkins/reports > http.log 2>&1 &'
+                sh 'nohup python3 -m http.server 8000 --directory /var/lib/jenkins/reports > http.log 2>&1 &; echo "nohup exit status: $?"'
                 sleep 5
             }
         }
