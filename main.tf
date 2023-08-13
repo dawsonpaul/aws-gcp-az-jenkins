@@ -147,7 +147,7 @@ resource "azurerm_application_gateway" "waflab" {
 
   waf_configuration {
     enabled                  = true
-    firewall_mode            = "Detection"
+    firewall_mode            = "Prevention"
     rule_set_type            = "OWASP"
     rule_set_version         = "3.1"
     request_body_check       = true
