@@ -67,7 +67,7 @@ pipeline {
                     echo "ngrok URL: ${url.tunnels[0]?.public_url}"
         }
     }
-}
+    
     }
     post {
         always {
