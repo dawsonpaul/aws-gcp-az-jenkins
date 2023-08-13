@@ -59,7 +59,7 @@ pipeline {
         stage('Run ngrok and Get URL') {
             steps {
         // Start the ngrok container
-                sh "docker run --network host -e NGROK_AUTHTOKEN=$NGROK_TOKEN -p 4040:4040 ngrok/ngrok http 172.17.0.1:8000 > /dev/null 2>&1 &"
+                sh "nohup docker run --network host -e NGROK_AUTHTOKEN=$NGROK_TOKEN -p 4040:4040 ngrok/ngrok http 172.17.0.1:8000 > /dev/null 2>&1 &"
                 sleep 5 // Allow some time for ngrok to start
                 script {
                     // Fetch the ngrok tunnels information. - readJSON needs plugin "Pipeline Utility Steps"
