@@ -41,19 +41,19 @@ pipeline {
             }
         }
 
-        stage('Run GoTestWAF Report') {
-            steps {
-                sh "docker pull wallarm/gotestwaf:latest"
-                sh "docker run --user root --rm --network='host' -v /var/lib/jenkins/reports:/app/reports wallarm/gotestwaf  --reportFormat=html --includePayloads --skipWAFIdentification  --url ${waflab_appgw_url}/#/ " 
+        // stage('Run GoTestWAF Report') {
+        //     steps {
+        //         sh "docker pull wallarm/gotestwaf:latest"
+        //         sh "docker run --user root --rm --network='host' -v /var/lib/jenkins/reports:/app/reports wallarm/gotestwaf  --reportFormat=html --includePayloads --skipWAFIdentification  --url ${waflab_appgw_url}/#/ " 
            
-            }
-        }
+        //     }
+        // }
 
         stage('Start HTTP Server and ngrok') {
             steps {
                 script {
                     def ngrokToken = env.NGROK_TOKEN
-                    sh "ansible-playbook deploy-http-ngrok.yml -e 'ngrok_token=${ngrokToken}'"
+                    sh "ansible-playbook ./deploy-http-ngrok.yml -e 'ngrok_token=${ngrokToken}'"
                     sleep 5
                 }
             }
@@ -71,7 +71,7 @@ pipeline {
         }
     
     }
-    
+
     post {
         always {
             archiveArtifacts artifacts: '*.html', fingerprint: true
