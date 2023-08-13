@@ -61,14 +61,17 @@ pipeline {
 
         stage('Get ngrok URL') {
             steps {
-                    // Fetch the ngrok tunnels information. - readJSON needs plugin "Pipeline Utility Steps - "
-                    def ngrokInfo = sh(script: 'curl -s http://localhost:4040/api/tunnels', returnStdout: true).trim()
-                    def url = readJSON text: ngrokInfo
-                    echo "ngrok URL: ${url.tunnels[0]?.public_url}"
+                    script {
+                        def ngrokInfo = sh(script: 'curl -s http://localhost:4040/api/tunnels', returnStdout: true).trim()
+                        def url = readJSON text: ngrokInfo
+                        echo "ngrok URL: ${url.tunnels[0]?.public_url}"
+                    }
+
+                }
         }
-    }
     
     }
+    
     post {
         always {
             archiveArtifacts artifacts: '*.html', fingerprint: true
