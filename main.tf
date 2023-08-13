@@ -149,7 +149,7 @@ resource "azurerm_application_gateway" "waflab" {
     enabled                  = true
     firewall_mode            = "Prevention"
     rule_set_type            = "OWASP"
-    rule_set_version         = "3.1"
+    rule_set_version         = "3.2"
     request_body_check       = true
     max_request_body_size_kb = 128
   }
