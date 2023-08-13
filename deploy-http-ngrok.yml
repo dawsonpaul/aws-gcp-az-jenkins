@@ -1,5 +1,6 @@
 - name: Start HTTP Server and ngrok
   hosts: localhost
+  connection: local
   become: yes
   vars:
     NGROK_TOKEN: "{{ ngrok_token }}"
