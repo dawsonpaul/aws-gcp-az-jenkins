@@ -49,19 +49,18 @@ pipeline {
             }
         }
 
-        stage('Start HTTP Server') {
+        stage('Start HTTP Server and ngrok') {
             steps {
-                sh 'nohup python3 -m http.server 8000 --directory /var/lib/jenkins/reports > http.log 2>&1 &; echo "nohup exit status: $?"'
-                sleep 5
+                script {
+                    def ngrokToken = env.NGROK_TOKEN
+                    sh "ansible-playbook deploy-http-ngrok.yml -e 'ngrok_token=${ngrokToken}'"
+                    sleep 5
+                }
             }
         }
 
-        stage('Run ngrok and Get URL') {
+        stage('Get ngrok URL') {
             steps {
-        // Start the ngrok container
-                sh "nohup docker run --network host -e NGROK_AUTHTOKEN=$NGROK_TOKEN -p 4040:4040 ngrok/ngrok http 172.17.0.1:8000 > ngrok.log 2>&1 &"
-                sleep 5 // Allow some time for ngrok to start
-                script {
                     // Fetch the ngrok tunnels information. - readJSON needs plugin "Pipeline Utility Steps - "
                     def ngrokInfo = sh(script: 'curl -s http://localhost:4040/api/tunnels', returnStdout: true).trim()
                     def url = readJSON text: ngrokInfo
