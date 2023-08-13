@@ -92,6 +92,8 @@ resource "azurerm_application_gateway" "waflab" {
   name                = "waflab-appgw"
   location            = azurerm_resource_group.waflab.location
   resource_group_name = azurerm_resource_group.waflab.name
+  firewall_policy_id = azurerm_web_application_firewall_policy.waflab_policy.id
+
 
   sku {
     name     = "WAF_v2"
@@ -145,14 +147,14 @@ resource "azurerm_application_gateway" "waflab" {
     backend_http_settings_name = "backend-http-settings"
   }
 
-  waf_configuration {
-    enabled                  = true
-    firewall_mode            = "Prevention"
-    rule_set_type            = "OWASP"
-    rule_set_version         = "3.2"
-    request_body_check       = true
-    max_request_body_size_kb = 128
-  }
+  # waf_configuration {
+  #   enabled                  = true
+  #   firewall_mode            = "Prevention"
+  #   rule_set_type            = "OWASP"
+  #   rule_set_version         = "3.2"
+  #   request_body_check       = true
+  #   max_request_body_size_kb = 128
+  # }
 }
 
 
