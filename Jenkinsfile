@@ -56,7 +56,7 @@ pipeline {
             steps {
                 sh "docker pull wallarm/gotestwaf:latest"
                 // Run gotestwaf against the Load Balancer IP-
-                sh "docker run --user root --rm --network='host' -v /var/lib/jenkins/reports:/app/reports wallarm/gotestwaf  --reportFormat=html --includePayloads  --skipWAFBlockCheck  --skipWAFIdentification  --url ${waflab_appgw_url}/#/ " 
+                sh "docker run --user root --rm --network='host' -v /var/lib/jenkins/reports:/app/reports wallarm/gotestwaf  --reportFormat=html --includePayloads --skipWAFIdentification  --url ${waflab_appgw_url}/#/ " 
            
             }
         }
