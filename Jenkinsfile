@@ -58,15 +58,17 @@ pipeline {
 
         stage('Run ngrok and Get URL') {
             steps {
-                sh "docker run -e NGROK_AUTHTOKEN=$NGROK_TOKEN -p 4040:4040 ngrok/ngrok http 172.17.0.1:8000 &"
-                sleep 5
+        // Start the ngrok container
+                sh "docker run --network host -e NGROK_AUTHTOKEN=$NGROK_TOKEN -p 4040:4040 ngrok/ngrok http 172.17.0.1:8000 &"
+                sleep 5 // Allow some time for ngrok to start
                 script {
+                    // Fetch the ngrok tunnels information
                     def ngrokInfo = sh(script: 'curl -s http://localhost:4040/api/tunnels', returnStdout: true).trim()
                     def url = readJSON text: ngrokInfo
-                    echo "ngrok URL: ${url.tunnels[0].public_url}"
-                }
-            }
+                    echo "ngrok URL: ${url.tunnels[0]?.public_url}"
         }
+    }
+}
     }
     post {
         always {
