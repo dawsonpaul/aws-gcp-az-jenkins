@@ -10,44 +10,44 @@ pipeline {
 
  stages {
 
-    //     stage('Terraform: Init') {
-    //         steps {
+        stage('Terraform: Init') {
+            steps {
 
-    //             sh 'terraform init -no-color'
-    //         }
-    //     }
-    //     stage('Terraform: Plan') {
-    //         steps {
+                sh 'terraform init -no-color'
+            }
+        }
+        stage('Terraform: Plan') {
+            steps {
                 
-    //             sh 'az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET -t $AZURE_TENANT_ID'
-    //             sh 'terraform plan -no-color -var "AZURE_CLIENT_ID=${AZURE_CLIENT_ID}" -var "AZURE_CLIENT_SECRET=${AZURE_CLIENT_SECRET}" -var "AZURE_TENANT_ID=${AZURE_TENANT_ID}" -var "AZURE_SUBSCRIPTION_ID=${AZURE_SUBSCRIPTION_ID}"'
+                sh 'az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET -t $AZURE_TENANT_ID'
+                sh 'terraform plan -no-color -var "AZURE_CLIENT_ID=${AZURE_CLIENT_ID}" -var "AZURE_CLIENT_SECRET=${AZURE_CLIENT_SECRET}" -var "AZURE_TENANT_ID=${AZURE_TENANT_ID}" -var "AZURE_SUBSCRIPTION_ID=${AZURE_SUBSCRIPTION_ID}"'
 
-    //         }
-    //     }
+            }
+        }
 
-    //     stage('Terraform: Apply') {
-    //         steps {
-    //             sh 'terraform apply -auto-approve -no-color -var "AZURE_CLIENT_ID=${AZURE_CLIENT_ID}" -var "AZURE_CLIENT_SECRET=${AZURE_CLIENT_SECRET}" -var "AZURE_TENANT_ID=${AZURE_TENANT_ID}" -var "AZURE_SUBSCRIPTION_ID=${AZURE_SUBSCRIPTION_ID}"'
-    //             script {
-    //                 waflab_vm_ip_address = sh(script: "terraform output waflab_vm_ip_address", returnStdout: true).trim()
-    //                 waflab_appgw_url = sh(script: "terraform output waflab_appgw_url", returnStdout: true).trim()
-    //             }
-    //         }
-    //     }
+        stage('Terraform: Apply') {
+            steps {
+                sh 'terraform apply -auto-approve -no-color -var "AZURE_CLIENT_ID=${AZURE_CLIENT_ID}" -var "AZURE_CLIENT_SECRET=${AZURE_CLIENT_SECRET}" -var "AZURE_TENANT_ID=${AZURE_TENANT_ID}" -var "AZURE_SUBSCRIPTION_ID=${AZURE_SUBSCRIPTION_ID}"'
+                script {
+                    waflab_vm_ip_address = sh(script: "terraform output waflab_vm_ip_address", returnStdout: true).trim()
+                    waflab_appgw_url = sh(script: "terraform output waflab_appgw_url", returnStdout: true).trim()
+                }
+            }
+        }
 
-    //     stage('Ansible: Deploy OWASP JuiceShop') {
-    //         steps {
-    //             sh "ansible-playbook ./deploy-owasp-juiceshop.yml  -u adminuser --private-key ${EC2_SSH_KEY} --extra-vars 'waflab_vm_ip_address=${waflab_vm_ip_address}'"
-    //         }
-    //     }
+        stage('Ansible: Deploy OWASP JuiceShop') {
+            steps {
+                sh "ansible-playbook ./deploy-owasp-juiceshop.yml  -u adminuser --private-key ${EC2_SSH_KEY} --extra-vars 'waflab_vm_ip_address=${waflab_vm_ip_address}'"
+            }
+        }
 
-        // stage('Run GoTestWAF Report') {
-        //     steps {
-        //         sh "docker pull wallarm/gotestwaf:latest"
-        //         sh "docker run --user root --rm --network='host' -v /var/lib/jenkins/reports:/app/reports wallarm/gotestwaf  --reportFormat=html --includePayloads --skipWAFIdentification  --url ${waflab_appgw_url}/#/ " 
+        stage('Run GoTestWAF Report') {
+            steps {
+                sh "docker pull wallarm/gotestwaf:latest"
+                sh "docker run --user root --rm --network='host' -v /var/lib/jenkins/reports:/app/reports wallarm/gotestwaf  --reportFormat=html --includePayloads --skipWAFIdentification  --url ${waflab_appgw_url}/#/ " 
            
-        //     }
-        // }
+            }
+        }
 
         stage('Start HTTP Server and ngrok') {
             steps {
