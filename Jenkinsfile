@@ -69,6 +69,20 @@ pipeline {
 
                 }
         }
+
+        stage('Terraform: Destroy (Optional)') {
+            when {
+                expression { currentBuild.resultIsBetterOrEqualTo('SUCCESS') }
+            }
+            steps {
+                script {
+                    def shouldDestroy = input(message: 'Do you want to destroy the Terraform resources?', ok: 'Yes', parameters: [booleanParam(defaultValue: false, description: 'Tick for yes', name: 'confirm')])
+                    if (shouldDestroy) {
+                        sh 'terraform destroy -auto-approve -no-color -var "AZURE_CLIENT_ID=${AZURE_CLIENT_ID}" -var "AZURE_CLIENT_SECRET=${AZURE_CLIENT_SECRET}" -var "AZURE_TENANT_ID=${AZURE_TENANT_ID}" -var "AZURE_SUBSCRIPTION_ID=${AZURE_SUBSCRIPTION_ID}"'
+                    }
+                }
+            }
+        }
     
     }
 
