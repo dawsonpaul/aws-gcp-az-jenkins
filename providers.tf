@@ -7,7 +7,7 @@ terraform {
   }
 }
 
-# Configure the Microsoft Azure Provider
+# Configure the Microsoft Azure Providerc -
 provider "azurerm" {
   features {}
   client_id       = var.AZURE_CLIENT_ID
