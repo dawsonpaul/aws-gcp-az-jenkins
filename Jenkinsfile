@@ -18,7 +18,7 @@ pipeline {
             }
         }
 
-        stage('Deploy') {
+        stage('Deploy - Dev') {
             steps {
                 // Replace with your deployment commands
                 echo 'Deploying to test environment...'
@@ -37,7 +37,7 @@ pipeline {
             }
         }
         failure {
-            // Steps to handle the failure case
+            // Steps to handle the failure case -
             script {
                 // Example: Send failure notifications or update Jira with failure status
                 echo 'Build or deployment failed. Updating Jira with failure status...'
