@@ -90,5 +90,5 @@ pipeline {
 //         always {
 //             archiveArtifacts artifacts: '*.html', fingerprint: true ----
 //         }
-//     }
+//     }.
 }
