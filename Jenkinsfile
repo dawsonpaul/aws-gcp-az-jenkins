@@ -44,7 +44,7 @@ pipeline {
         stage('Run GoTestWAF Report') {
             steps {
                 sh "docker pull wallarm/gotestwaf:latest"
-                sh "docker run --user root --rm --network='host' -v /var/lib/jenkins/reports:/app/reports wallarm/gotestwaf  --reportFormat=html --includePayloads --skipWAFIdentification  --url ${waflab_appgw_url}/#/ " 
+                sh "docker run --user root --rm --network='host' -v /var/lib/jenkins/reports:/app/reports wallarm/gotestwaf  --reportFormat=html --includePayloads=true --skipWAFIdentification --noEmailReport --url ${waflab_appgw_url}/#/" 
            
             }
         }
