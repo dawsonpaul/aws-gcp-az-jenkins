@@ -14,10 +14,14 @@ pipeline {
             steps {
                 script {
                     def selectedClouds = input message: 'Select Cloud Providers to deploy to:', parameters: [
-                        booleanParam(defaultValue: true, description: 'Deploy to Azure', name: 'Azure')
+                        booleanParam(defaultValue: true, description: 'Deploy to Azure', name: 'Azure'),
+                        booleanParam(defaultValue: false, description: 'Deploy to AWS', name: 'AWS'),
+                        booleanParam(defaultValue: false, description: 'Deploy to GCP', name: 'GCP')
                     ]
                     env.DEPLOY_AZURE = selectedClouds.Azure
-                    echo "Selected Cloud Provider: Azure=${env.DEPLOY_AZURE}"
+                    env.DEPLOY_AWS = selectedClouds.AWS
+                    env.DEPLOY_GCP = selectedClouds.GCP
+                    echo "Selected Cloud Providers: Azure=${env.DEPLOY_AZURE}, AWS=${env.DEPLOY_AWS}, GCP=${env.DEPLOY_GCP}"
                 }
             }
         }
