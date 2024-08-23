@@ -4,8 +4,8 @@ pipeline {
         TF_IN_AUTOMATION = 'true'
         TF_CLI_CONFIG_FILE = credentials('terraform_creds')
         AZURE = credentials('Azure_Service_Principal')
-        AWS = credentials('AWS_Credentials')
-        GCP = credentials('GCP_Credentials')
+        // AWS = credentials('AWS_Credentials')
+        // GCP = credentials('GCP_Credentials')
         EC2_SSH_KEY = credentials('ec2_ssh')
         NGROK_TOKEN = credentials('ngrok_token')
     }
