@@ -4,8 +4,8 @@ pipeline {
         TF_IN_AUTOMATION = 'true'
         TF_CLI_CONFIG_FILE = credentials('terraform_creds')
         AZURE = credentials('Azure_Service_Principal')
-        // AWS = credentials('AWS_Credentials')
-        // GCP = credentials('GCP_Credentials')
+        AWS = credentials('AWS_Credentials')
+        GCP = credentials('GCP_Credentials')
         EC2_SSH_KEY = credentials('ec2_ssh')
         NGROK_TOKEN = credentials('ngrok_token')
     }
@@ -166,16 +166,33 @@ pipeline {
         }
 
         stage('Decide on GoTestWAF Execution') {
+            when {
+                expression { return env.DEPLOY_AZURE == 'true' || env.DEPLOY_AWS == 'true' || env.DEPLOY_GCP == 'true' }
+            }
             steps {
                 script {
-                    def runGoTestWAF = input message: 'Do you want to run GoTestWAF against the selected environments?', parameters: [
-                        booleanParam(defaultValue: true, description: 'Run GoTestWAF on Azure', name: 'RunGoTestWAF_Azure'),
-                        booleanParam(defaultValue: false, description: 'Run GoTestWAF on AWS', name: 'RunGoTestWAF_AWS'),
-                        booleanParam(defaultValue: false, description: 'Run GoTestWAF on GCP', name: 'RunGoTestWAF_GCP')
-                    ]
-                    env.RUN_GOTESTWAF_AZURE = runGoTestWAF.RunGoTestWAF_Azure
-                    env.RUN_GOTESTWAF_AWS = runGoTestWAF.RunGoTestWAF_AWS
-                    env.RUN_GOTESTWAF_GCP = runGoTestWAF.RunGoTestWAF_GCP
+                    def parameters = []
+                    if (env.DEPLOY_AZURE == 'true') {
+                        parameters << booleanParam(defaultValue: true, description: 'Run GoTestWAF on Azure', name: 'RunGoTestWAF_Azure')
+                    }
+                    if (env.DEPLOY_AWS == 'true') {
+                        parameters << booleanParam(defaultValue: false, description: 'Run GoTestWAF on AWS', name: 'RunGoTestWAF_AWS')
+                    }
+                    if (env.DEPLOY_GCP == 'true') {
+                        parameters << booleanParam(defaultValue: false, description: 'Run GoTestWAF on GCP', name: 'RunGoTestWAF_GCP')
+                    }
+
+                    def runGoTestWAF = input message: 'Do you want to run GoTestWAF against the selected environments?', parameters: parameters
+
+                    if (env.DEPLOY_AZURE == 'true') {
+                        env.RUN_GOTESTWAF_AZURE = runGoTestWAF['RunGoTestWAF_Azure']
+                    }
+                    if (env.DEPLOY_AWS == 'true') {
+                        env.RUN_GOTESTWAF_AWS = runGoTestWAF['RunGoTestWAF_AWS']
+                    }
+                    if (env.DEPLOY_GCP == 'true') {
+                        env.RUN_GOTESTWAF_GCP = runGoTestWAF['RunGoTestWAF_GCP']
+                    }
                 }
             }
         }
@@ -212,40 +229,46 @@ pipeline {
             }
         }
 
-        stage('Start HTTP Server and ngrok') {
+        stage('Prompt for Destroy Confirmation') {
             when {
-                expression { return env.DEPLOY_AZURE == 'true' }
+                expression { return env.DEPLOY_AZURE == 'true' || env.DEPLOY_AWS == 'true' || env.DEPLOY_GCP == 'true' }
             }
             steps {
                 script {
-                    def ngrokToken = env.NGROK_TOKEN
-                    sh "ansible-playbook ./deploy-http-ngrok.yml -e 'ngrok_token=${ngrokToken}'"
-                    sleep 5
+                    def parameters = []
+                    if (env.DEPLOY_AZURE == 'true') {
+                        parameters << booleanParam(defaultValue: false, description: 'Destroy Azure Resources', name: 'Destroy_Azure')
+                    }
+                    if (env.DEPLOY_AWS == 'true') {
+                        parameters << booleanParam(defaultValue: false, description: 'Destroy AWS Resources', name: 'Destroy_AWS')
+                    }
+                    if (env.DEPLOY_GCP == 'true') {
+                        parameters << booleanParam(defaultValue: false, description: 'Destroy GCP Resources', name: 'Destroy_GCP')
+                    }
+
+                    def destroyResources = input message: 'Do you want to destroy the Terraform resources for the selected environments?', parameters: parameters
+
+                    if (env.DEPLOY_AZURE == 'true') {
+                        env.DESTROY_AZURE = destroyResources['Destroy_Azure']
+                    }
+                    if (env.DEPLOY_AWS == 'true') {
+                        env.DESTROY_AWS = destroyResources['Destroy_AWS']
+                    }
+                    if (env.DEPLOY_GCP == 'true') {
+                        env.DESTROY_GCP = destroyResources['Destroy_GCP']
+                    }
                 }
             }
         }
 
-        stage('Get ngrok URL') {
+        stage('Terraform: Destroy') {
             when {
-                expression { return env.DEPLOY_AZURE == 'true' }
-            }
-            steps {
-                script {
-                    def ngrokInfo = sh(script: 'curl -s http://localhost:4040/api/tunnels', returnStdout: true).trim()
-                    def url = readJSON text: ngrokInfo
-                    echo "ngrok URL: ${url.tunnels[0]?.public_url}"
-                }
-            }
-        }
-
-        stage('Terraform: Destroy (Optional)') {
-            when {
-                expression { currentBuild.resultIsBetterOrEqualTo('SUCCESS') }
+                expression { return env.DESTROY_AZURE == 'true' || env.DESTROY_AWS == 'true' || env.DESTROY_GCP == 'true' }
             }
             parallel {
                 stage('Destroy Azure') {
                     when {
-                        expression { return env.DEPLOY_AZURE == 'true' }
+                        expression { return env.DESTROY_AZURE == 'true' }
                     }
                     steps {
                         dir('Azure') {
@@ -255,7 +278,7 @@ pipeline {
                 }
                 stage('Destroy AWS') {
                     when {
-                        expression { return env.DEPLOY_AWS == 'true' }
+                        expression { return env.DESTROY_AWS == 'true' }
                     }
                     steps {
                         echo "AWS Destroy stage - Dummy"
@@ -264,7 +287,7 @@ pipeline {
                 }
                 stage('Destroy GCP') {
                     when {
-                        expression { return env.DEPLOY_GCP == 'true' }
+                        expression { return env.DESTROY_GCP == 'true' }
                     }
                     steps {
                         echo "GCP Destroy stage - Dummy"
