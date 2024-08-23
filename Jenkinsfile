@@ -10,21 +10,21 @@ pipeline {
 
     stages {
 
-        stage('Select Cloud Provider') {
+        stage('Select Cloud Providers') {
             steps {
                 script {
-                    def selectedCloud = input message: 'Select Cloud Provider to deploy to:', parameters: [
-                        choice(name: 'CSP', choices: ['Azure', 'AWS', 'GCP'], description: 'Choose the Cloud Service Provider')
+                    def selectedClouds = input message: 'Select Cloud Providers to deploy to:', parameters: [
+                        booleanParam(defaultValue: true, description: 'Deploy to Azure', name: 'Azure')
                     ]
-                    env.SELECTED_CSP = selectedCloud
-                    echo "Selected Cloud Provider: ${env.SELECTED_CSP}"
+                    env.DEPLOY_AZURE = selectedClouds.Azure
+                    echo "Selected Cloud Provider: Azure=${env.DEPLOY_AZURE}"
                 }
             }
         }
 
         stage('Terraform: Init') {
             when {
-                expression { return env.SELECTED_CSP == 'Azure' }
+                expression { return env.DEPLOY_AZURE == 'true' }
             }
             steps {
                 dir('Azure') {
@@ -35,7 +35,7 @@ pipeline {
 
         stage('Terraform: Plan') {
             when {
-                expression { return env.SELECTED_CSP == 'Azure' }
+                expression { return env.DEPLOY_AZURE == 'true' }
             }
             steps {
                 dir('Azure') {
@@ -47,7 +47,7 @@ pipeline {
 
         stage('Terraform: Apply') {
             when {
-                expression { return env.SELECTED_CSP == 'Azure' }
+                expression { return env.DEPLOY_AZURE == 'true' }
             }
             steps {
                 dir('Azure') {
@@ -62,7 +62,7 @@ pipeline {
 
         stage('Ansible: Deploy OWASP JuiceShop') {
             when {
-                expression { return env.SELECTED_CSP == 'Azure' }
+                expression { return env.DEPLOY_AZURE == 'true' }
             }
             steps {
                 sh "ansible-playbook ./deploy-owasp-juiceshop.yml  -u adminuser --private-key ${EC2_SSH_KEY} --extra-vars 'waflab_vm_ip_address=${waflab_vm_ip_address}'"
@@ -71,7 +71,7 @@ pipeline {
 
         stage('Run GoTestWAF Report') {
             when {
-                expression { return env.SELECTED_CSP == 'Azure' }
+                expression { return env.DEPLOY_AZURE == 'true' }
             }
             steps {
                 sh "docker pull wallarm/gotestwaf:latest"
@@ -81,7 +81,7 @@ pipeline {
 
         stage('Start HTTP Server and ngrok') {
             when {
-                expression { return env.SELECTED_CSP == 'Azure' }
+                expression { return env.DEPLOY_AZURE == 'true' }
             }
             steps {
                 script {
@@ -94,7 +94,7 @@ pipeline {
 
         stage('Get ngrok URL') {
             when {
-                expression { return env.SELECTED_CSP == 'Azure' }
+                expression { return env.DEPLOY_AZURE == 'true' }
             }
             steps {
                 script {
@@ -107,7 +107,7 @@ pipeline {
 
         stage('Terraform: Destroy (Optional)') {
             when {
-                expression { return env.SELECTED_CSP == 'Azure' && currentBuild.resultIsBetterOrEqualTo('SUCCESS') }
+                expression { return env.DEPLOY_AZURE == 'true' && currentBuild.resultIsBetterOrEqualTo('SUCCESS') }
             }
             steps {
                 script {
