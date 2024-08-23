@@ -4,6 +4,8 @@ pipeline {
         TF_IN_AUTOMATION = 'true'
         TF_CLI_CONFIG_FILE = credentials('terraform_creds')
         AZURE = credentials('Azure_Service_Principal')
+        AWS = credentials('AWS_Credentials')
+        GCP = credentials('GCP_Credentials')
         EC2_SSH_KEY = credentials('ec2_ssh')
         NGROK_TOKEN = credentials('ngrok_token')
     }
@@ -27,59 +29,186 @@ pipeline {
         }
 
         stage('Terraform: Init') {
-            when {
-                expression { return env.DEPLOY_AZURE == 'true' }
-            }
-            steps {
-                dir('Azure') {
-                    sh 'terraform init -no-color'
+            parallel {
+                stage('Init Azure') {
+                    when {
+                        expression { return env.DEPLOY_AZURE == 'true' }
+                    }
+                    steps {
+                        dir('Azure') {
+                            sh 'terraform init -no-color'
+                        }
+                    }
+                }
+                stage('Init AWS') {
+                    when {
+                        expression { return env.DEPLOY_AWS == 'true' }
+                    }
+                    steps {
+                        echo "AWS Init stage - Dummy"
+                        // Add AWS initialization commands here in the future
+                    }
+                }
+                stage('Init GCP') {
+                    when {
+                        expression { return env.DEPLOY_GCP == 'true' }
+                    }
+                    steps {
+                        echo "GCP Init stage - Dummy"
+                        // Add GCP initialization commands here in the future
+                    }
                 }
             }
         }
 
         stage('Terraform: Plan') {
-            when {
-                expression { return env.DEPLOY_AZURE == 'true' }
-            }
-            steps {
-                dir('Azure') {
-                    sh 'az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET -t $AZURE_TENANT_ID'
-                    sh 'terraform plan -no-color -var "AZURE_CLIENT_ID=${AZURE_CLIENT_ID}" -var "AZURE_CLIENT_SECRET=${AZURE_CLIENT_SECRET}" -var "AZURE_TENANT_ID=${AZURE_TENANT_ID}" -var "AZURE_SUBSCRIPTION_ID=${AZURE_SUBSCRIPTION_ID}"'
+            parallel {
+                stage('Plan Azure') {
+                    when {
+                        expression { return env.DEPLOY_AZURE == 'true' }
+                    }
+                    steps {
+                        dir('Azure') {
+                            sh 'az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET -t $AZURE_TENANT_ID'
+                            sh 'terraform plan -no-color -var "AZURE_CLIENT_ID=${AZURE_CLIENT_ID}" -var "AZURE_CLIENT_SECRET=${AZURE_CLIENT_SECRET}" -var "AZURE_TENANT_ID=${AZURE_TENANT_ID}" -var "AZURE_SUBSCRIPTION_ID=${AZURE_SUBSCRIPTION_ID}"'
+                        }
+                    }
+                }
+                stage('Plan AWS') {
+                    when {
+                        expression { return env.DEPLOY_AWS == 'true' }
+                    }
+                    steps {
+                        echo "AWS Plan stage - Dummy"
+                        // Add AWS plan commands here in the future
+                    }
+                }
+                stage('Plan GCP') {
+                    when {
+                        expression { return env.DEPLOY_GCP == 'true' }
+                    }
+                    steps {
+                        echo "GCP Plan stage - Dummy"
+                        // Add GCP plan commands here in the future
+                    }
                 }
             }
         }
 
         stage('Terraform: Apply') {
-            when {
-                expression { return env.DEPLOY_AZURE == 'true' }
-            }
-            steps {
-                dir('Azure') {
-                    sh 'terraform apply -auto-approve -no-color -var "AZURE_CLIENT_ID=${AZURE_CLIENT_ID}" -var "AZURE_CLIENT_SECRET=${AZURE_CLIENT_SECRET}" -var "AZURE_TENANT_ID=${AZURE_TENANT_ID}" -var "AZURE_SUBSCRIPTION_ID=${AZURE_SUBSCRIPTION_ID}"'
-                    script {
-                        waflab_vm_ip_address = sh(script: "terraform output waflab_vm_ip_address", returnStdout: true).trim()
-                        waflab_appgw_url = sh(script: "terraform output waflab_appgw_url", returnStdout: true).trim()
+            parallel {
+                stage('Apply Azure') {
+                    when {
+                        expression { return env.DEPLOY_AZURE == 'true' }
+                    }
+                    steps {
+                        dir('Azure') {
+                            sh 'terraform apply -auto-approve -no-color -var "AZURE_CLIENT_ID=${AZURE_CLIENT_ID}" -var "AZURE_CLIENT_SECRET=${AZURE_CLIENT_SECRET}" -var "AZURE_TENANT_ID=${AZURE_TENANT_ID}" -var "AZURE_SUBSCRIPTION_ID=${AZURE_SUBSCRIPTION_ID}"'
+                            script {
+                                waflab_vm_ip_address = sh(script: "terraform output waflab_vm_ip_address", returnStdout: true).trim()
+                                waflab_appgw_url = sh(script: "terraform output waflab_appgw_url", returnStdout: true).trim()
+                            }
+                        }
+                    }
+                }
+                stage('Apply AWS') {
+                    when {
+                        expression { return env.DEPLOY_AWS == 'true' }
+                    }
+                    steps {
+                        echo "AWS Apply stage - Dummy"
+                        // Add AWS apply commands here in the future
+                    }
+                }
+                stage('Apply GCP') {
+                    when {
+                        expression { return env.DEPLOY_GCP == 'true' }
+                    }
+                    steps {
+                        echo "GCP Apply stage - Dummy"
+                        // Add GCP apply commands here in the future
                     }
                 }
             }
         }
 
         stage('Ansible: Deploy OWASP JuiceShop') {
-            when {
-                expression { return env.DEPLOY_AZURE == 'true' }
+            parallel {
+                stage('Deploy on Azure') {
+                    when {
+                        expression { return env.DEPLOY_AZURE == 'true' }
+                    }
+                    steps {
+                        dir('Azure') {
+                            sh "ansible-playbook ./deploy-owasp-juiceshop.yml  -u adminuser --private-key ${EC2_SSH_KEY} --extra-vars 'waflab_vm_ip_address=${waflab_vm_ip_address}'"
+                        }
+                    }
+                }
+                stage('Deploy on AWS') {
+                    when {
+                        expression { return env.DEPLOY_AWS == 'true' }
+                    }
+                    steps {
+                        echo "AWS Ansible stage - Dummy"
+                        // Add AWS Ansible commands here in the future
+                    }
+                }
+                stage('Deploy on GCP') {
+                    when {
+                        expression { return env.DEPLOY_GCP == 'true' }
+                    }
+                    steps {
+                        echo "GCP Ansible stage - Dummy"
+                        // Add GCP Ansible commands here in the future
+                    }
+                }
             }
+        }
+
+        stage('Decide on GoTestWAF Execution') {
             steps {
-                sh "ansible-playbook ./deploy-owasp-juiceshop.yml  -u adminuser --private-key ${EC2_SSH_KEY} --extra-vars 'waflab_vm_ip_address=${waflab_vm_ip_address}'"
+                script {
+                    def runGoTestWAF = input message: 'Do you want to run GoTestWAF against the selected environments?', parameters: [
+                        booleanParam(defaultValue: true, description: 'Run GoTestWAF on Azure', name: 'RunGoTestWAF_Azure'),
+                        booleanParam(defaultValue: false, description: 'Run GoTestWAF on AWS', name: 'RunGoTestWAF_AWS'),
+                        booleanParam(defaultValue: false, description: 'Run GoTestWAF on GCP', name: 'RunGoTestWAF_GCP')
+                    ]
+                    env.RUN_GOTESTWAF_AZURE = runGoTestWAF.RunGoTestWAF_Azure
+                    env.RUN_GOTESTWAF_AWS = runGoTestWAF.RunGoTestWAF_AWS
+                    env.RUN_GOTESTWAF_GCP = runGoTestWAF.RunGoTestWAF_GCP
+                }
             }
         }
 
         stage('Run GoTestWAF Report') {
-            when {
-                expression { return env.DEPLOY_AZURE == 'true' }
-            }
-            steps {
-                sh "docker pull wallarm/gotestwaf:latest"
-                sh "docker run --user root --rm --network='host' -v /var/lib/jenkins/reports:/app/reports wallarm/gotestwaf --reportFormat=html --includePayloads=true --skipWAFIdentification --noEmailReport --url ${waflab_appgw_url}/#/"
+            parallel {
+                stage('Test Azure WAF') {
+                    when {
+                        expression { return env.DEPLOY_AZURE == 'true' && env.RUN_GOTESTWAF_AZURE == 'true' }
+                    }
+                    steps {
+                        sh "docker pull wallarm/gotestwaf:latest"
+                        sh "docker run --user root --rm --network='host' -v /var/lib/jenkins/reports:/app/reports wallarm/gotestwaf --reportFormat=html --includePayloads=true --skipWAFIdentification --noEmailReport --url ${waflab_appgw_url}/#/"
+                    }
+                }
+                stage('Test AWS WAF') {
+                    when {
+                        expression { return env.DEPLOY_AWS == 'true' && env.RUN_GOTESTWAF_AWS == 'true' }
+                    }
+                    steps {
+                        echo "AWS GoTestWAF stage - Dummy"
+                        // Add AWS GoTestWAF commands here in the future
+                    }
+                }
+                stage('Test GCP WAF') {
+                    when {
+                        expression { return env.DEPLOY_GCP == 'true' && env.RUN_GOTESTWAF_GCP == 'true' }
+                    }
+                    steps {
+                        echo "GCP GoTestWAF stage - Dummy"
+                        // Add GCP GoTestWAF commands here in the future
+                    }
+                }
             }
         }
 
@@ -111,15 +240,35 @@ pipeline {
 
         stage('Terraform: Destroy (Optional)') {
             when {
-                expression { return env.DEPLOY_AZURE == 'true' && currentBuild.resultIsBetterOrEqualTo('SUCCESS') }
+                expression { currentBuild.resultIsBetterOrEqualTo('SUCCESS') }
             }
-            steps {
-                script {
-                    def shouldDestroy = input(message: 'Do you want to destroy the Terraform resources?', ok: 'Yes', parameters: [booleanParam(defaultValue: false, description: 'Tick for yes', name: 'confirm')])
-                    if (shouldDestroy) {
+            parallel {
+                stage('Destroy Azure') {
+                    when {
+                        expression { return env.DEPLOY_AZURE == 'true' }
+                    }
+                    steps {
                         dir('Azure') {
                             sh 'terraform destroy -auto-approve -no-color -var "AZURE_CLIENT_ID=${AZURE_CLIENT_ID}" -var "AZURE_CLIENT_SECRET=${AZURE_CLIENT_SECRET}" -var "AZURE_TENANT_ID=${AZURE_TENANT_ID}" -var "AZURE_SUBSCRIPTION_ID=${AZURE_SUBSCRIPTION_ID}"'
                         }
+                    }
+                }
+                stage('Destroy AWS') {
+                    when {
+                        expression { return env.DEPLOY_AWS == 'true' }
+                    }
+                    steps {
+                        echo "AWS Destroy stage - Dummy"
+                        // Add AWS destroy commands here in the future
+                    }
+                }
+                stage('Destroy GCP') {
+                    when {
+                        expression { return env.DEPLOY_GCP == 'true' }
+                    }
+                    steps {
+                        echo "GCP Destroy stage - Dummy"
+                        // Add GCP destroy commands here in the future
                     }
                 }
             }
