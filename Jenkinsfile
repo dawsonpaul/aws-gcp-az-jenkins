@@ -5,7 +5,7 @@ pipeline {
         TF_CLI_CONFIG_FILE = credentials('terraform_creds')
         AZURE = credentials('Azure_Service_Principal')
         AWS_CREDENTIALS = credentials('aws-credential')
-       // GCP = credentials('GCP_Credentials')
+        //GCP = credentials('GCP_Credentials')
         EC2_SSH_KEY = credentials('ec2_ssh')
         NGROK_TOKEN = credentials('ngrok_token')
     }
@@ -46,7 +46,7 @@ pipeline {
                     }
                     steps {
                         dir('AWS') {
-                            withAWS(credentials: 'AWS_Credentials', region: 'us-east-1') {
+                            withAWS(credentials: 'AWS_Credentials', region: 'eu-west-1') {
                                 sh 'terraform init -no-color'
                             }
                         }
@@ -83,7 +83,7 @@ pipeline {
                     }
                     steps {
                         dir('AWS') {
-                            withAWS(credentials: 'AWS_Credentials', region: 'us-east-1') {
+                            withAWS(credentials: 'AWS_Credentials', region: 'eu-west-1') {
                                 sh 'terraform plan -no-color'
                             }
                         }
@@ -123,7 +123,7 @@ pipeline {
                     }
                     steps {
                         dir('AWS') {
-                            withAWS(credentials: 'AWS_Credentials', region: 'us-east-1') {
+                            withAWS(credentials: 'AWS_Credentials', region: 'eu-west-1') {
                                 sh 'terraform apply -auto-approve -no-color'
                                 script {
                                     // Capture outputs from Terraform
@@ -269,7 +269,7 @@ pipeline {
                     }
                     steps {
                         dir('AWS') {
-                            withAWS(credentials: 'AWS_Credentials', region: 'us-east-1') {
+                            withAWS(credentials: 'AWS_Credentials', region: 'eu-west-1') {
                                 sh 'terraform destroy -auto-approve -no-color'
                             }
                         }
