@@ -4,8 +4,8 @@ pipeline {
         TF_IN_AUTOMATION = 'true'
         TF_CLI_CONFIG_FILE = credentials('terraform_creds')
         AZURE = credentials('Azure_Service_Principal')
-        // AWS = credentials('AWS_Credentials')
-        // GCP = credentials('GCP_Credentials')
+        AWS_CREDENTIALS = credentials('AWS_Credentials') // ID for the AWS credentials stored in Jenkins
+        GCP = credentials('GCP_Credentials')
         EC2_SSH_KEY = credentials('ec2_ssh')
         NGROK_TOKEN = credentials('ngrok_token')
     }
@@ -45,8 +45,11 @@ pipeline {
                         expression { return env.DEPLOY_AWS == 'true' }
                     }
                     steps {
-                        echo "AWS Init stage - Dummy"
-                        // Add AWS initialization commands here in the future
+                        dir('AWS') {
+                            withAWS(credentials: 'AWS_Credentials', region: 'us-east-1') {
+                                sh 'terraform init -no-color'
+                            }
+                        }
                     }
                 }
                 stage('Init GCP') {
@@ -79,8 +82,11 @@ pipeline {
                         expression { return env.DEPLOY_AWS == 'true' }
                     }
                     steps {
-                        echo "AWS Plan stage - Dummy"
-                        // Add AWS plan commands here in the future
+                        dir('AWS') {
+                            withAWS(credentials: 'AWS_Credentials', region: 'us-east-1') {
+                                sh 'terraform plan -no-color'
+                            }
+                        }
                     }
                 }
                 stage('Plan GCP') {
@@ -116,8 +122,16 @@ pipeline {
                         expression { return env.DEPLOY_AWS == 'true' }
                     }
                     steps {
-                        echo "AWS Apply stage - Dummy"
-                        // Add AWS apply commands here in the future
+                        dir('AWS') {
+                            withAWS(credentials: 'AWS_Credentials', region: 'us-east-1') {
+                                sh 'terraform apply -auto-approve -no-color'
+                                script {
+                                    // Capture outputs from Terraform
+                                    aws_instance_ip = sh(script: "terraform output ec2_public_ip", returnStdout: true).trim()
+                                    aws_lb_dns = sh(script: "terraform output load_balancer_dns", returnStdout: true).trim()
+                                }
+                            }
+                        }
                     }
                 }
                 stage('Apply GCP') {
@@ -127,39 +141,6 @@ pipeline {
                     steps {
                         echo "GCP Apply stage - Dummy"
                         // Add GCP apply commands here in the future
-                    }
-                }
-            }
-        }
-
-        stage('Ansible: Deploy OWASP JuiceShop') {
-            parallel {
-                stage('Deploy on Azure') {
-                    when {
-                        expression { return env.DEPLOY_AZURE == 'true' }
-                    }
-                    steps {
-                        dir('Azure') {
-                            sh "ansible-playbook ./deploy-owasp-juiceshop.yml  -u adminuser --private-key ${EC2_SSH_KEY} --extra-vars 'waflab_vm_ip_address=${waflab_vm_ip_address}'"
-                        }
-                    }
-                }
-                stage('Deploy on AWS') {
-                    when {
-                        expression { return env.DEPLOY_AWS == 'true' }
-                    }
-                    steps {
-                        echo "AWS Ansible stage - Dummy"
-                        // Add AWS Ansible commands here in the future
-                    }
-                }
-                stage('Deploy on GCP') {
-                    when {
-                        expression { return env.DEPLOY_GCP == 'true' }
-                    }
-                    steps {
-                        echo "GCP Ansible stage - Dummy"
-                        // Add GCP Ansible commands here in the future
                     }
                 }
             }
@@ -204,8 +185,10 @@ pipeline {
                         expression { return env.DEPLOY_AZURE == 'true' && env.RUN_GOTESTWAF_AZURE == 'true' }
                     }
                     steps {
-                        sh "docker pull wallarm/gotestwaf:latest"
-                        sh "docker run --user root --rm --network='host' -v /var/lib/jenkins/reports:/app/reports wallarm/gotestwaf --reportFormat=html --includePayloads=true --skipWAFIdentification --noEmailReport --url ${waflab_appgw_url}/#/"
+                        dir('Azure') { // Use Azure directory for the Azure GoTestWAF report
+                            sh "docker pull wallarm/gotestwaf:latest"
+                            sh "docker run --user root --rm --network='host' -v /var/lib/jenkins/Azure:/app/reports wallarm/gotestwaf --reportFormat=html --includePayloads=true --skipWAFIdentification --noEmailReport --url ${waflab_appgw_url}/#/"
+                        }
                     }
                 }
                 stage('Test AWS WAF') {
@@ -213,8 +196,10 @@ pipeline {
                         expression { return env.DEPLOY_AWS == 'true' && env.RUN_GOTESTWAF_AWS == 'true' }
                     }
                     steps {
-                        echo "AWS GoTestWAF stage - Dummy"
-                        // Add AWS GoTestWAF commands here in the future
+                        dir('AWS') { // Use AWS directory for the AWS GoTestWAF report
+                            sh "docker pull wallarm/gotestwaf:latest"
+                            sh "docker run --user root --rm --network='host' -v /var/lib/jenkins/AWS:/app/reports wallarm/gotestwaf --reportFormat=html --includePayloads=true --skipWAFIdentification --noEmailReport --url http://${aws_lb_dns}/#/"
+                        }
                     }
                 }
                 stage('Test GCP WAF') {
@@ -222,8 +207,10 @@ pipeline {
                         expression { return env.DEPLOY_GCP == 'true' && env.RUN_GOTESTWAF_GCP == 'true' }
                     }
                     steps {
-                        echo "GCP GoTestWAF stage - Dummy"
-                        // Add GCP GoTestWAF commands here in the future
+                        dir('GCP') { // Use GCP directory for the GCP GoTestWAF report
+                            echo "GCP GoTestWAF stage - Dummy"
+                            // Add GCP GoTestWAF commands here in the future
+                        }
                     }
                 }
             }
@@ -281,8 +268,11 @@ pipeline {
                         expression { return env.DESTROY_AWS == 'true' }
                     }
                     steps {
-                        echo "AWS Destroy stage - Dummy"
-                        // Add AWS destroy commands here in the future
+                        dir('AWS') {
+                            withAWS(credentials: 'AWS_Credentials', region: 'us-east-1') {
+                                sh 'terraform destroy -auto-approve -no-color'
+                            }
+                        }
                     }
                 }
                 stage('Destroy GCP') {
