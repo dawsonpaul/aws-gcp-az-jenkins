@@ -255,26 +255,27 @@ pipeline {
             }
             steps {
                 script {
-                    def parameters = []
+                    def destroyAzure = false
+                    def destroyAWS = false
+                    def destroyGCP = false
+
                     if (env.DEPLOY_AZURE == 'true') {
-                        parameters << booleanParam(defaultValue: false, description: 'Destroy Azure Resources', name: 'Destroy_Azure')
+                        destroyAzure = input(message: 'Destroy Azure Resources?', parameters: [booleanParam(defaultValue: false, name: 'confirm')])
                     }
                     if (env.DEPLOY_AWS == 'true') {
-                        parameters << booleanParam(defaultValue: false, description: 'Destroy AWS Resources', name: 'Destroy_AWS')
+                        destroyAWS = input(message: 'Destroy AWS Resources?', parameters: [booleanParam(defaultValue: false, name: 'confirm')])
                     }
                     if (env.DEPLOY_GCP == 'true') {
-                        parameters << booleanParam(defaultValue: false, description: 'Destroy GCP Resources', name: 'Destroy_GCP')
+                        destroyGCP = input(message: 'Destroy GCP Resources?', parameters: [booleanParam(defaultValue: false, name: 'confirm')])
                     }
 
-                    def destroyResources = input message: 'Do you want to destroy the Terraform resources for the selected environments?', parameters: parameters
-
-                    // Access the map using bracket notation to avoid MissingPropertyException
-                    env.DESTROY_AZURE = destroyResources['Destroy_Azure'] ? 'true' : 'false'
-                    env.DESTROY_AWS = destroyResources['Destroy_AWS'] ? 'true' : 'false'
-                    env.DESTROY_GCP = destroyResources['Destroy_GCP'] ? 'true' : 'false'
+                    env.DESTROY_AZURE = destroyAzure ? 'true' : 'false'
+                    env.DESTROY_AWS = destroyAWS ? 'true' : 'false'
+                    env.DESTROY_GCP = destroyGCP ? 'true' : 'false'
                 }
             }
         }
+
 
         stage('Terraform: Destroy') {
             when {
