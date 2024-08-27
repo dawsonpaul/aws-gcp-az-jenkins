@@ -5,31 +5,25 @@ pipeline {
         TF_CLI_CONFIG_FILE = credentials('terraform_creds')
         AZURE = credentials('Azure_Service_Principal')
         AWS_CREDENTIALS_ID = 'aws-credential' // The ID for AWS credentials stored in Jenkins
-       // GCP = credentials('GCP_Credentials')
+        //GCP = credentials('GCP_Credentials')
         EC2_SSH_KEY = credentials('ec2_ssh')
         NGROK_TOKEN = credentials('ngrok_token')
     }
 
     stages {
-
         stage('Select Cloud Providers') {
             steps {
                 script {
                     def selectedClouds = input message: 'Select Cloud Providers to deploy to:', parameters: [
                         booleanParam(defaultValue: true, description: 'Deploy to Azure', name: 'Azure'),
-                        booleanParam(defaultValue: false, description: 'Deploy to AWS', name: 'AWS'),
-                        booleanParam(defaultValue: false, description: 'Deploy to GCP', name: 'GCP')
+                        booleanParam(defaultValue: true, description: 'Deploy to AWS', name: 'AWS'),
+                        booleanParam(defaultValue: true, description: 'Deploy to GCP', name: 'GCP')
                     ]
-
-                    // Store the values in variables before setting environment variables
-                    def deployAzure = selectedClouds.Azure
-                    def deployAWS = selectedClouds.AWS
-                    def deployGCP = selectedClouds.GCP
-
-                    // Set environment variables based on the input
-                    env.DEPLOY_AZURE = deployAzure ? 'true' : 'false'
-                    env.DEPLOY_AWS = deployAWS ? 'true' : 'false'
-                    env.DEPLOY_GCP = deployGCP ? 'true' : 'false'
+                    
+                    // Store the selected options in variables
+                    env.DEPLOY_AZURE = selectedClouds['Azure'] ? 'true' : 'false'
+                    env.DEPLOY_AWS = selectedClouds['AWS'] ? 'true' : 'false'
+                    env.DEPLOY_GCP = selectedClouds['GCP'] ? 'true' : 'false'
 
                     echo "Selected Cloud Providers: Azure=${env.DEPLOY_AZURE}, AWS=${env.DEPLOY_AWS}, GCP=${env.DEPLOY_GCP}"
                 }
@@ -40,7 +34,7 @@ pipeline {
             parallel {
                 stage('Init Azure') {
                     when {
-                        expression { return env.DEPLOY_AZURE == 'true' }
+                        expression { env.DEPLOY_AZURE == 'true' }
                     }
                     steps {
                         dir('Azure') {
@@ -50,7 +44,7 @@ pipeline {
                 }
                 stage('Init AWS') {
                     when {
-                        expression { return env.DEPLOY_AWS == 'true' }
+                        expression { env.DEPLOY_AWS == 'true' }
                     }
                     steps {
                         dir('AWS') {
@@ -62,7 +56,7 @@ pipeline {
                 }
                 stage('Init GCP') {
                     when {
-                        expression { return env.DEPLOY_GCP == 'true' }
+                        expression { env.DEPLOY_GCP == 'true' }
                     }
                     steps {
                         echo "GCP Init stage - Dummy"
@@ -76,7 +70,7 @@ pipeline {
             parallel {
                 stage('Plan Azure') {
                     when {
-                        expression { return env.DEPLOY_AZURE == 'true' }
+                        expression { env.DEPLOY_AZURE == 'true' }
                     }
                     steps {
                         dir('Azure') {
@@ -87,7 +81,7 @@ pipeline {
                 }
                 stage('Plan AWS') {
                     when {
-                        expression { return env.DEPLOY_AWS == 'true' }
+                        expression { env.DEPLOY_AWS == 'true' }
                     }
                     steps {
                         dir('AWS') {
@@ -99,7 +93,7 @@ pipeline {
                 }
                 stage('Plan GCP') {
                     when {
-                        expression { return env.DEPLOY_GCP == 'true' }
+                        expression { env.DEPLOY_GCP == 'true' }
                     }
                     steps {
                         echo "GCP Plan stage - Dummy"
@@ -113,7 +107,7 @@ pipeline {
             parallel {
                 stage('Apply Azure') {
                     when {
-                        expression { return env.DEPLOY_AZURE == 'true' }
+                        expression { env.DEPLOY_AZURE == 'true' }
                     }
                     steps {
                         dir('Azure') {
@@ -127,7 +121,7 @@ pipeline {
                 }
                 stage('Apply AWS') {
                     when {
-                        expression { return env.DEPLOY_AWS == 'true' }
+                        expression { env.DEPLOY_AWS == 'true' }
                     }
                     steps {
                         dir('AWS') {
@@ -143,7 +137,7 @@ pipeline {
                 }
                 stage('Apply GCP') {
                     when {
-                        expression { return env.DEPLOY_GCP == 'true' }
+                        expression { env.DEPLOY_GCP == 'true' }
                     }
                     steps {
                         echo "GCP Apply stage - Dummy"
@@ -159,28 +153,23 @@ pipeline {
             }
             steps {
                 script {
-                    def parameters = []
-                    if (env.DEPLOY_AZURE == 'true') {
-                        parameters << booleanParam(defaultValue: true, description: 'Run GoTestWAF on Azure', name: 'RunGoTestWAF_Azure')
-                    }
-                    if (env.DEPLOY_AWS == 'true') {
-                        parameters << booleanParam(defaultValue: false, description: 'Run GoTestWAF on AWS', name: 'RunGoTestWAF_AWS')
-                    }
-                    if (env.DEPLOY_GCP == 'true') {
-                        parameters << booleanParam(defaultValue: false, description: 'Run GoTestWAF on GCP', name: 'RunGoTestWAF_GCP')
-                    }
-
-                    def runGoTestWAF = input message: 'Do you want to run GoTestWAF against the selected environments?', parameters: parameters
+                    def runGoTestWAF_Azure = false
+                    def runGoTestWAF_AWS = false
+                    def runGoTestWAF_GCP = false
 
                     if (env.DEPLOY_AZURE == 'true') {
-                        env.RUN_GOTESTWAF_AZURE = runGoTestWAF['RunGoTestWAF_Azure'] ? 'true' : 'false'
+                        runGoTestWAF_Azure = input(message: 'Run GoTestWAF on Azure?', ok: 'Proceed', parameters: [booleanParam(defaultValue: true, description: 'Run GoTestWAF on Azure?', name: 'RunGoTestWAF_Azure')])
                     }
                     if (env.DEPLOY_AWS == 'true') {
-                        env.RUN_GOTESTWAF_AWS = runGoTestWAF['RunGoTestWAF_AWS'] ? 'true' : 'false'
+                        runGoTestWAF_AWS = input(message: 'Run GoTestWAF on AWS?', ok: 'Proceed', parameters: [booleanParam(defaultValue: true, description: 'Run GoTestWAF on AWS?', name: 'RunGoTestWAF_AWS')])
                     }
                     if (env.DEPLOY_GCP == 'true') {
-                        env.RUN_GOTESTWAF_GCP = runGoTestWAF['RunGoTestWAF_GCP'] ? 'true' : 'false'
+                        runGoTestWAF_GCP = input(message: 'Run GoTestWAF on GCP?', ok: 'Proceed', parameters: [booleanParam(defaultValue: true, description: 'Run GoTestWAF on GCP?', name: 'RunGoTestWAF_GCP')])
                     }
+
+                    env.RUN_GOTESTWAF_AZURE = runGoTestWAF_Azure ? 'true' : 'false'
+                    env.RUN_GOTESTWAF_AWS = runGoTestWAF_AWS ? 'true' : 'false'
+                    env.RUN_GOTESTWAF_GCP = runGoTestWAF_GCP ? 'true' : 'false'
                 }
             }
         }
@@ -189,7 +178,7 @@ pipeline {
             parallel {
                 stage('Test Azure WAF') {
                     when {
-                        expression { return env.DEPLOY_AZURE == 'true' && env.RUN_GOTESTWAF_AZURE == 'true' }
+                        expression { env.DEPLOY_AZURE == 'true' && env.RUN_GOTESTWAF_AZURE == 'true' }
                     }
                     steps {
                         dir('Azure') { // Use Azure directory for the Azure GoTestWAF report
@@ -200,7 +189,7 @@ pipeline {
                 }
                 stage('Test AWS WAF') {
                     when {
-                        expression { return env.DEPLOY_AWS == 'true' && env.RUN_GOTESTWAF_AWS == 'true' }
+                        expression { env.DEPLOY_AWS == 'true' && env.RUN_GOTESTWAF_AWS == 'true' }
                     }
                     steps {
                         dir('AWS') { // Use AWS directory for the AWS GoTestWAF report
@@ -211,7 +200,7 @@ pipeline {
                 }
                 stage('Test GCP WAF') {
                     when {
-                        expression { return env.DEPLOY_GCP == 'true' && env.RUN_GOTESTWAF_GCP == 'true' }
+                        expression { env.DEPLOY_GCP == 'true' && env.RUN_GOTESTWAF_GCP == 'true' }
                     }
                     steps {
                         dir('GCP') { // Use GCP directory for the GCP GoTestWAF report
@@ -242,27 +231,21 @@ pipeline {
 
                     def destroyResources = input message: 'Do you want to destroy the Terraform resources for the selected environments?', parameters: parameters
 
-                    if (env.DEPLOY_AZURE == 'true') {
-                        env.DESTROY_AZURE = destroyResources['Destroy_Azure'] ? 'true' : 'false'
-                    }
-                    if (env.DEPLOY_AWS == 'true') {
-                        env.DESTROY_AWS = destroyResources['Destroy_AWS'] ? 'true' : 'false'
-                    }
-                    if (env.DEPLOY_GCP == 'true') {
-                        env.DESTROY_GCP = destroyResources['Destroy_GCP'] ? 'true' : 'false'
-                    }
+                    env.DESTROY_AZURE = destroyResources['Destroy_Azure'] ? 'true' : 'false'
+                    env.DESTROY_AWS = destroyResources['Destroy_AWS'] ? 'true' : 'false'
+                    env.DESTROY_GCP = destroyResources['Destroy_GCP'] ? 'true' : 'false'
                 }
             }
         }
 
         stage('Terraform: Destroy') {
             when {
-                expression { return env.DESTROY_AZURE == 'true' || env.DESTROY_AWS == 'true' || env.DESTROY_GCP == 'true' }
+                expression { env.DESTROY_AZURE == 'true' || env.DESTROY_AWS == 'true' || env.DESTROY_GCP == 'true' }
             }
             parallel {
                 stage('Destroy Azure') {
                     when {
-                        expression { return env.DESTROY_AZURE == 'true' }
+                        expression { env.DESTROY_AZURE == 'true' }
                     }
                     steps {
                         dir('Azure') {
@@ -272,7 +255,7 @@ pipeline {
                 }
                 stage('Destroy AWS') {
                     when {
-                        expression { return env.DESTROY_AWS == 'true' }
+                        expression { env.DESTROY_AWS == 'true' }
                     }
                     steps {
                         dir('AWS') {
@@ -284,7 +267,7 @@ pipeline {
                 }
                 stage('Destroy GCP') {
                     when {
-                        expression { return env.DESTROY_GCP == 'true' }
+                        expression { env.DESTROY_GCP == 'true' }
                     }
                     steps {
                         echo "GCP Destroy stage - Dummy"
