@@ -194,7 +194,7 @@ pipeline {
                     steps {
                         dir('Azure') { // Use Azure directory for the Azure GoTestWAF report
                             sh "docker pull wallarm/gotestwaf:latest"
-                            sh "docker run --user root --rm --network='host' -v /var/lib/jenkins/Azure:/app/reports wallarm/gotestwaf --reportFormat=html --includePayloads=true --skipWAFIdentification --noEmailReport --url ${waflab_appgw_url}/#/"
+                            sh "docker run --user root --rm --network='host' -v /var/lib/jenkins/reports/Azure:/app/reports wallarm/gotestwaf --reportFormat=html --includePayloads=true --skipWAFIdentification --noEmailReport --url ${waflab_appgw_url}/#/"
                         }
                     }
                 }
@@ -205,7 +205,7 @@ pipeline {
                     steps {
                         dir('AWS') { // Use AWS directory for the AWS GoTestWAF report
                             sh "docker pull wallarm/gotestwaf:latest"
-                            sh "docker run --user root --rm --network='host' -v /var/lib/jenkins/AWS:/app/reports wallarm/gotestwaf --reportFormat=html --includePayloads=true --skipWAFIdentification --noEmailReport --url http://${aws_lb_dns}/#/"
+                            sh "docker run --user root --rm --network='host' -v /var/lib/jenkins/reports/AWS:/app/reports wallarm/gotestwaf --reportFormat=html --includePayloads=true --skipWAFIdentification --noEmailReport --url http://${aws_lb_dns}/#/"
                         }
                     }
                 }
