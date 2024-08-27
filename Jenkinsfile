@@ -268,10 +268,10 @@ pipeline {
 
                     def destroyResources = input message: 'Do you want to destroy the Terraform resources for the selected environments?', parameters: parameters
 
-                    // Explicitly store each input into its corresponding environment variable
-                    env.DESTROY_AZURE = destroyResources.Destroy_Azure ? 'true' : 'false'
-                    env.DESTROY_AWS = destroyResources.Destroy_AWS ? 'true' : 'false'
-                    env.DESTROY_GCP = destroyResources.Destroy_GCP ? 'true' : 'false'
+                    // Access the map using bracket notation to avoid MissingPropertyException
+                    env.DESTROY_AZURE = destroyResources['Destroy_Azure'] ? 'true' : 'false'
+                    env.DESTROY_AWS = destroyResources['Destroy_AWS'] ? 'true' : 'false'
+                    env.DESTROY_GCP = destroyResources['Destroy_GCP'] ? 'true' : 'false'
                 }
             }
         }
