@@ -4,7 +4,7 @@ pipeline {
         TF_IN_AUTOMATION = 'true'
         TF_CLI_CONFIG_FILE = credentials('terraform_creds')
         AZURE = credentials('Azure_Service_Principal')
-        AWS_CREDENTIALS_ID = 'aws-credential' // This is the ID of the AWS Credentials stored in Jenkins
+        AWS_CREDENTIALS_ID = 'aws-credential' // ID for the AWS Credentials stored in Jenkins
        // GCP = credentials('GCP_Credentials')
         EC2_SSH_KEY = credentials('ec2_ssh')
         NGROK_TOKEN = credentials('ngrok_token')
@@ -20,9 +20,9 @@ pipeline {
                         booleanParam(defaultValue: false, description: 'Deploy to AWS', name: 'AWS'),
                         booleanParam(defaultValue: false, description: 'Deploy to GCP', name: 'GCP')
                     ]
-                    env.DEPLOY_AZURE = selectedClouds.Azure
-                    env.DEPLOY_AWS = selectedClouds.AWS
-                    env.DEPLOY_GCP = selectedClouds.GCP
+                    env.DEPLOY_AZURE = selectedClouds['Azure']
+                    env.DEPLOY_AWS = selectedClouds['AWS']
+                    env.DEPLOY_GCP = selectedClouds['GCP']
                     echo "Selected Cloud Providers: Azure=${env.DEPLOY_AZURE}, AWS=${env.DEPLOY_AWS}, GCP=${env.DEPLOY_GCP}"
                 }
             }
@@ -206,7 +206,7 @@ pipeline {
                         expression { return env.DEPLOY_GCP == 'true' && env.RUN_GOTESTWAF_GCP == 'true' }
                     }
                     steps {
-                        dir('GCP') { // Use GCP directory for GCP GoTestWAF report
+                        dir('GCP') { // Use GCP directory for the GCP GoTestWAF report
                             echo "GCP GoTestWAF stage - Dummy"
                             // Add GCP GoTestWAF commands here in the future
                         }
