@@ -4,7 +4,7 @@ pipeline {
         TF_IN_AUTOMATION = 'true'
         TF_CLI_CONFIG_FILE = credentials('terraform_creds')
         AZURE = credentials('Azure_Service_Principal')
-        AWS_CREDENTIALS_ID = 'aws-credential' // The ID for AWS credentials stored in Jenkins
+        AWS_CREDENTIALS_ID = 'AWS_Credentials' // The ID for AWS credentials stored in Jenkins
         //GCP = credentials('GCP_Credentials')
         EC2_SSH_KEY = credentials('ec2_ssh')
         NGROK_TOKEN = credentials('ngrok_token')
@@ -268,9 +268,10 @@ pipeline {
 
                     def destroyResources = input message: 'Do you want to destroy the Terraform resources for the selected environments?', parameters: parameters
 
-                    env.DESTROY_AZURE = destroyResources['Destroy_Azure'] ? 'true' : 'false'
-                    env.DESTROY_AWS = destroyResources['Destroy_AWS'] ? 'true' : 'false'
-                    env.DESTROY_GCP = destroyResources['Destroy_GCP'] ? 'true' : 'false'
+                    // Explicitly store each input into its corresponding environment variable
+                    env.DESTROY_AZURE = destroyResources.Destroy_Azure ? 'true' : 'false'
+                    env.DESTROY_AWS = destroyResources.Destroy_AWS ? 'true' : 'false'
+                    env.DESTROY_GCP = destroyResources.Destroy_GCP ? 'true' : 'false'
                 }
             }
         }
