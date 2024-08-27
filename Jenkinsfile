@@ -4,7 +4,7 @@ pipeline {
         TF_IN_AUTOMATION = 'true'
         TF_CLI_CONFIG_FILE = credentials('terraform_creds')
         AZURE = credentials('Azure_Service_Principal')
-        AWS_CREDENTIALS_ID = 'aws-credential' // ID for the AWS Credentials stored in Jenkins
+        AWS_CREDENTIALS_ID = 'aws-credential' // The ID for AWS credentials stored in Jenkins
        // GCP = credentials('GCP_Credentials')
         EC2_SSH_KEY = credentials('ec2_ssh')
         NGROK_TOKEN = credentials('ngrok_token')
@@ -20,9 +20,17 @@ pipeline {
                         booleanParam(defaultValue: false, description: 'Deploy to AWS', name: 'AWS'),
                         booleanParam(defaultValue: false, description: 'Deploy to GCP', name: 'GCP')
                     ]
-                    env.DEPLOY_AZURE = selectedClouds['Azure']
-                    env.DEPLOY_AWS = selectedClouds['AWS']
-                    env.DEPLOY_GCP = selectedClouds['GCP']
+
+                    // Store the values in variables before setting environment variables
+                    def deployAzure = selectedClouds.Azure
+                    def deployAWS = selectedClouds.AWS
+                    def deployGCP = selectedClouds.GCP
+
+                    // Set environment variables based on the input
+                    env.DEPLOY_AZURE = deployAzure ? 'true' : 'false'
+                    env.DEPLOY_AWS = deployAWS ? 'true' : 'false'
+                    env.DEPLOY_GCP = deployGCP ? 'true' : 'false'
+
                     echo "Selected Cloud Providers: Azure=${env.DEPLOY_AZURE}, AWS=${env.DEPLOY_AWS}, GCP=${env.DEPLOY_GCP}"
                 }
             }
@@ -46,7 +54,7 @@ pipeline {
                     }
                     steps {
                         dir('AWS') {
-                            withAWS(credentials: "${env.AWS_CREDENTIALS_ID}") { // Automatically handles AWS credentials
+                            withAWS(credentials: "${env.AWS_CREDENTIALS_ID}") {
                                 sh 'terraform init -no-color'
                             }
                         }
@@ -83,7 +91,7 @@ pipeline {
                     }
                     steps {
                         dir('AWS') {
-                            withAWS(credentials: "${env.AWS_CREDENTIALS_ID}") { // Automatically handles AWS credentials
+                            withAWS(credentials: "${env.AWS_CREDENTIALS_ID}") {
                                 sh 'terraform plan -no-color'
                             }
                         }
@@ -123,7 +131,7 @@ pipeline {
                     }
                     steps {
                         dir('AWS') {
-                            withAWS(credentials: "${env.AWS_CREDENTIALS_ID}") { // Automatically handles AWS credentials
+                            withAWS(credentials: "${env.AWS_CREDENTIALS_ID}") {
                                 sh 'terraform apply -auto-approve -no-color'
                                 script {
                                     aws_instance_ip = sh(script: "terraform output ec2_public_ip", returnStdout: true).trim()
@@ -165,13 +173,13 @@ pipeline {
                     def runGoTestWAF = input message: 'Do you want to run GoTestWAF against the selected environments?', parameters: parameters
 
                     if (env.DEPLOY_AZURE == 'true') {
-                        env.RUN_GOTESTWAF_AZURE = runGoTestWAF['RunGoTestWAF_Azure']
+                        env.RUN_GOTESTWAF_AZURE = runGoTestWAF['RunGoTestWAF_Azure'] ? 'true' : 'false'
                     }
                     if (env.DEPLOY_AWS == 'true') {
-                        env.RUN_GOTESTWAF_AWS = runGoTestWAF['RunGoTestWAF_AWS']
+                        env.RUN_GOTESTWAF_AWS = runGoTestWAF['RunGoTestWAF_AWS'] ? 'true' : 'false'
                     }
                     if (env.DEPLOY_GCP == 'true') {
-                        env.RUN_GOTESTWAF_GCP = runGoTestWAF['RunGoTestWAF_GCP']
+                        env.RUN_GOTESTWAF_GCP = runGoTestWAF['RunGoTestWAF_GCP'] ? 'true' : 'false'
                     }
                 }
             }
@@ -235,13 +243,13 @@ pipeline {
                     def destroyResources = input message: 'Do you want to destroy the Terraform resources for the selected environments?', parameters: parameters
 
                     if (env.DEPLOY_AZURE == 'true') {
-                        env.DESTROY_AZURE = destroyResources['Destroy_Azure']
+                        env.DESTROY_AZURE = destroyResources['Destroy_Azure'] ? 'true' : 'false'
                     }
                     if (env.DEPLOY_AWS == 'true') {
-                        env.DESTROY_AWS = destroyResources['Destroy_AWS']
+                        env.DESTROY_AWS = destroyResources['Destroy_AWS'] ? 'true' : 'false'
                     }
                     if (env.DEPLOY_GCP == 'true') {
-                        env.DESTROY_GCP = destroyResources['Destroy_GCP']
+                        env.DESTROY_GCP = destroyResources['Destroy_GCP'] ? 'true' : 'false'
                     }
                 }
             }
@@ -268,7 +276,7 @@ pipeline {
                     }
                     steps {
                         dir('AWS') {
-                            withAWS(credentials: "${env.AWS_CREDENTIALS_ID}") { // Automatically handles AWS credentials
+                            withAWS(credentials: "${env.AWS_CREDENTIALS_ID}") {
                                 sh 'terraform destroy -auto-approve -no-color'
                             }
                         }
