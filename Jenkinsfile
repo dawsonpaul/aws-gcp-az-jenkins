@@ -4,8 +4,8 @@ pipeline {
         TF_IN_AUTOMATION = 'true'
         TF_CLI_CONFIG_FILE = credentials('terraform_creds')
         AZURE = credentials('Azure_Service_Principal')
-        AWS_CREDENTIALS = credentials('aws-credential')
-        //GCP = credentials('GCP_Credentials')
+        AWS_CREDENTIALS_ID = 'aws-credential' // This is the ID of the AWS Credentials stored in Jenkins
+        GCP = credentials('GCP_Credentials')
         EC2_SSH_KEY = credentials('ec2_ssh')
         NGROK_TOKEN = credentials('ngrok_token')
     }
@@ -46,7 +46,7 @@ pipeline {
                     }
                     steps {
                         dir('AWS') {
-                            withAWS(credentials: 'AWS_Credentials', region: 'eu-west-1') {
+                            withAWS(credentials: "${env.AWS_CREDENTIALS_ID}") { // Automatically handles AWS credentials
                                 sh 'terraform init -no-color'
                             }
                         }
@@ -83,7 +83,7 @@ pipeline {
                     }
                     steps {
                         dir('AWS') {
-                            withAWS(credentials: 'AWS_Credentials', region: 'eu-west-1') {
+                            withAWS(credentials: "${env.AWS_CREDENTIALS_ID}") { // Automatically handles AWS credentials
                                 sh 'terraform plan -no-color'
                             }
                         }
@@ -123,10 +123,9 @@ pipeline {
                     }
                     steps {
                         dir('AWS') {
-                            withAWS(credentials: 'AWS_Credentials', region: 'eu-west-1') {
+                            withAWS(credentials: "${env.AWS_CREDENTIALS_ID}") { // Automatically handles AWS credentials
                                 sh 'terraform apply -auto-approve -no-color'
                                 script {
-                                    // Capture outputs from Terraform
                                     aws_instance_ip = sh(script: "terraform output ec2_public_ip", returnStdout: true).trim()
                                     aws_lb_dns = sh(script: "terraform output load_balancer_dns", returnStdout: true).trim()
                                 }
@@ -207,7 +206,7 @@ pipeline {
                         expression { return env.DEPLOY_GCP == 'true' && env.RUN_GOTESTWAF_GCP == 'true' }
                     }
                     steps {
-                        dir('GCP') { // Use GCP directory for the GCP GoTestWAF report
+                        dir('GCP') { // Use GCP directory for GCP GoTestWAF report
                             echo "GCP GoTestWAF stage - Dummy"
                             // Add GCP GoTestWAF commands here in the future
                         }
@@ -269,7 +268,7 @@ pipeline {
                     }
                     steps {
                         dir('AWS') {
-                            withAWS(credentials: 'AWS_Credentials', region: 'eu-west-1') {
+                            withAWS(credentials: "${env.AWS_CREDENTIALS_ID}") { // Automatically handles AWS credentials
                                 sh 'terraform destroy -auto-approve -no-color'
                             }
                         }
