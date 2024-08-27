@@ -147,6 +147,17 @@ pipeline {
             }
         }
 
+        stage('Ansible: Deploy OWASP JuiceShop (Azure only)') {
+            when {
+                expression { env.DEPLOY_AZURE == 'true' }
+            }
+            steps {
+                dir('Azure') {
+                    sh "ansible-playbook ./deploy-owasp-juiceshop.yml  -u adminuser --private-key ${EC2_SSH_KEY} --extra-vars 'waflab_vm_ip_address=${waflab_vm_ip_address}'"
+                }
+            }
+        }
+
         stage('Decide on GoTestWAF Execution') {
             when {
                 expression { return env.DEPLOY_AZURE == 'true' || env.DEPLOY_AWS == 'true' || env.DEPLOY_GCP == 'true' }
@@ -208,6 +219,32 @@ pipeline {
                             // Add GCP GoTestWAF commands here in the future
                         }
                     }
+                }
+            }
+        }
+
+        stage('Start HTTP Server and ngrok') {
+            when {
+                expression { return env.DEPLOY_AZURE == 'true' || env.DEPLOY_AWS == 'true' || env.DEPLOY_GCP == 'true' }
+            }
+            steps {
+                script {
+                    def ngrokToken = env.NGROK_TOKEN
+                    sh "ansible-playbook ./deploy-http-ngrok.yml -e 'ngrok_token=${ngrokToken}'"
+                    sleep 5
+                }
+            }
+        }
+
+        stage('Get ngrok URL') {
+            when {
+                expression { return env.DEPLOY_AZURE == 'true' || env.DEPLOY_AWS == 'true' || env.DEPLOY_GCP == 'true' }
+            }
+            steps {
+                script {
+                    def ngrokInfo = sh(script: 'curl -s http://localhost:4040/api/tunnels', returnStdout: true).trim()
+                    def url = readJSON text: ngrokInfo
+                    echo "ngrok URL: ${url.tunnels[0]?.public_url}"
                 }
             }
         }
