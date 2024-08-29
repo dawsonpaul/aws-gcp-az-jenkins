@@ -5,7 +5,7 @@ pipeline {
         TF_CLI_CONFIG_FILE = credentials('terraform_creds')
         AZURE = credentials('Azure_Service_Principal')
         AWS_CREDENTIALS_ID = 'aws-credential' // The ID for AWS credentials stored in Jenkins
-        //GCP = credentials('GCP_Credentials')
+        //GCP = credentials('GCP__Credentials')
         EC2_SSH_KEY = credentials('ec2_ssh')
         NGROK_TOKEN = credentials('ngrok_token')
     }
